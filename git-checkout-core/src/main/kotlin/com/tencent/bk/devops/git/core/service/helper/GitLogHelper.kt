@@ -100,10 +100,10 @@ class GitLogHelper(
                 revisionRange = "${preCommitData.commit}..HEAD"
             )
         }
-        logger.info("defult encoding : ${Charset.defaultCharset()}")
+        logger.info("默认编码 : ${Charset.defaultCharset()}")
         gitLogs.forEach {
-            logger.info("source ${it.commitMessage} |" +
-                    " change encoding ${String(it.commitMessage.toByteArray(Charset.defaultCharset()))}")
+            logger.info("源信息 ${it.commitMessage} |" +
+                    " 修改编码后的信息 ${String(it.commitMessage.toByteArray(Charset.defaultCharset()))}")
         }
         val commits = gitLogs
             .map { log ->
@@ -121,6 +121,7 @@ class GitLogHelper(
                     elementId = settings.pipelineTaskId
                 )
             }
+        System.out.println("a")
         if (commits.isEmpty()) {
             // 这次构建没有新的提交
             saveCommit(
