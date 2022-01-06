@@ -103,7 +103,7 @@ class GitLogHelper(
         logger.info("defult encoding : ${Charset.defaultCharset()}")
         gitLogs.forEach {
             logger.info("source ${it.commitMessage} |" +
-                    " change encoding ${String(it.commitMessage.toByteArray(Charsets.UTF_8))}")
+                    " change encoding ${String(it.commitMessage.toByteArray(Charset.defaultCharset()))}")
         }
         val commits = gitLogs
             .map { log ->
