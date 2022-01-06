@@ -114,8 +114,8 @@ public class GitLogOutputStream extends OutputStream {
      */
     protected void processBuffer() {
         try {
-            System.out.println("charset is " + Charset.defaultCharset().name()
-                    + buffer.toString(Charset.defaultCharset().name()));
+            System.out.println("charset is " + "UTF-8"
+                    + buffer.toString("UTF-8"));
             System.out.println("defult " + buffer.toString());
         } catch (Exception e) {
             System.out.println(e.getMessage());
