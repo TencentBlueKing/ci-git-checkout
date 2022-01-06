@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 /**
  * Logs each line written to this stream to the log system of ant. Tries to be
@@ -112,6 +113,13 @@ public class GitLogOutputStream extends OutputStream {
      * Converts the buffer to a string and sends it to <code>processLine</code>
      */
     protected void processBuffer() {
+        try {
+            System.out.println("charset is " + Charset.defaultCharset().name() +
+                    buffer.toString(Charset.defaultCharset().name()));
+            System.out.println("defult " + buffer.toString());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
         processLine(buffer.toString());
         buffer.reset();
     }
