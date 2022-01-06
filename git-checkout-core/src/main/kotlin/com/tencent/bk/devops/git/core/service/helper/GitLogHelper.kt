@@ -41,6 +41,7 @@ import com.tencent.bk.devops.git.core.util.EnvHelper
 import com.tencent.bk.devops.git.core.util.GitUtil
 import com.tencent.bk.devops.git.core.util.RepositoryUtils
 import org.slf4j.LoggerFactory
+import java.nio.charset.Charset
 
 class GitLogHelper(
     private val git: GitCommandManager,
@@ -98,6 +99,10 @@ class GitLogHelper(
                 maxCount = GIT_LOG_MAX_COUNT,
                 revisionRange = "${preCommitData.commit}..HEAD"
             )
+        }
+        logger.info("defult encoding : ${Charset.defaultCharset()}")
+        gitLogs.forEach {
+            logger.info("source ${it.commitMessage} | change encoding ${String(it.commitMessage.toByteArray(Charsets.UTF_8))}")
         }
         val commits = gitLogs
             .map { log ->
