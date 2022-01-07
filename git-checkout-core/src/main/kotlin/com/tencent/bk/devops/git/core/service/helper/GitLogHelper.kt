@@ -100,11 +100,6 @@ class GitLogHelper(
                 revisionRange = "${preCommitData.commit}..HEAD"
             )
         }
-        logger.info("默认编码 : ${Charset.defaultCharset()}")
-        gitLogs.forEach {
-            logger.info("源信息 ${it.commitMessage} |" +
-                    " 修改编码后的信息 ${String(it.commitMessage.toByteArray(Charset.defaultCharset()))}")
-        }
         val commits = gitLogs
             .map { log ->
                 CommitData(

@@ -27,12 +27,14 @@
 
 package com.tencent.devops.git.log;
 
+import kotlin.text.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -114,13 +116,10 @@ public class GitLogOutputStream extends OutputStream {
      */
     protected void processBuffer() {
         try {
-            System.out.println("charset is " + "UTF-8"
-                    + buffer.toString("UTF-8"));
-            System.out.println("defult " + buffer.toString());
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+            processLine(buffer.toString(Charsets.UTF_8.name()));
+        } catch (UnsupportedEncodingException exception){
+            logger.info("encoding error");
         }
-        processLine(buffer.toString());
         buffer.reset();
     }
 
