@@ -54,6 +54,38 @@ class GitErrorsText : TranslationBundle() {
     var branchOrPathNameConflicts: String? = null
     var emptyAccessToken: String? = null
 
+    var authenticationFailedCause: String? = null
+    var authenticationFailedSolution: String? = null
+    val remoteServerFailedCause: String? = null
+    val remoteServerFailedSolution: String? = null
+    val noMatchingBranchCause: String? = null
+    val noMatchingBranchSolution: String? = null
+    val noInitializeBranchCause: String? = null
+    val noInitializeBranchSolution: String? = null
+    val sparseCheckoutLeavesNoEntryCause: String? = null
+    val sparseCheckoutLeavesNoEntrySolution: String? = null
+    var branchOrPathNameConflictsCause: String? = null
+    var branchOrPathNameConflictsSolution: String? = null
+    val mergeConflictsCause: String? = null
+    val mergeConflictsSolution: String? = null
+    val invalidMergeCause: String? = null
+    val invalidMergeSolution: String? = null
+    val cannotMergeUnrelatedHistoriesCause: String? = null
+    val cannotMergeUnrelatedHistoriesSolution: String? = null
+    val localChangesOverwrittenCause: String? = null
+    val localChangesOverwrittenSolution: String? = null
+    var noSubmoduleMappingCause: String? = null
+    var noSubmoduleMappingSolution: String? = null
+    val submoduleRepositoryDoesNotExistCause: String? = null
+    val submoduleRepositoryDoesNotExistSolution: String? = null
+    val invalidSubmoduleSHACause: String? = null
+    val invalidSubmoduleSHASolution: String? = null
+    val errorDownloadingObjectCause: String? = null
+    val errorDownloadingObjectSolution: String? = null
+    val lfsNotInstallCause: String? = null
+    val lfsNotInstallSolution: String? = null
+
+
     companion object {
         fun get(): GitErrorsText {
             return lookupBundle(Locale.SIMPLIFIED_CHINESE, GitErrorsText::class.java)

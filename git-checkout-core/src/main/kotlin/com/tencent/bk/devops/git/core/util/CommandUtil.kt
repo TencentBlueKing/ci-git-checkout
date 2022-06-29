@@ -134,10 +134,19 @@ object CommandUtil {
             return GitOutput(stdOuts = stdOuts, errOuts = errOuts, exitCode = exitCode)
         } catch (ignore: ExecuteException) {
             val errorMsg = gitErrors?.title ?: ("exec ${command.toStrings().joinToString(" ")} failed " +
-                "with an exitCode ${ignore.exitValue}")
+                    "with an exitCode ${ignore.exitValue}")
             val errorCode = gitErrors?.errorCode ?: GitConstants.CONFIG_ERROR
             val errorType = gitErrors?.errorType ?: ErrorType.USER
             val description = gitErrors?.description
+            val cause = gitErrors?.cause
+            val solution = gitErrors?.solution
+            logger.info("==========问题排查指引===============")
+            if (cause != null) {
+                logger.info("出现此错误的原因可能是：$cause")
+            }
+            if (solution != null) {
+                logger.info("可以从以下路径分析:$solution")
+            }
             if (description != null) {
                 logger.info("<a target='_blank' href='$description'>查看解决办法</a>")
             }
