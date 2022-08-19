@@ -156,6 +156,8 @@ object GitConstants {
     // 支持通过配置credential.helper= 禁用其他凭证管理的版本
     val SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION =
         VersionHelper.computeVersionFromBits(2, 9, 0, 0)
+    val SUPPORT_CRED_HELPER_GIT_VERSION =
+        VersionHelper.computeVersionFromBits(1, 7, 10, 0)
 
     const val USER_NEED_PROJECT_X_PERMISSION = 2101181
 }

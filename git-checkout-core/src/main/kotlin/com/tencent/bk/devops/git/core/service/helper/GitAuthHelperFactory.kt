@@ -25,51 +25,40 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.handler
+package com.tencent.bk.devops.git.core.service.helper
 
-import com.tencent.bk.devops.git.core.constant.ContextConstants
+import com.tencent.bk.devops.git.core.constant.GitConstants
+import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
-import com.tencent.bk.devops.git.core.service.helper.GitAuthHelperFactory
-import com.tencent.bk.devops.git.core.util.EnvHelper
-import org.slf4j.LoggerFactory
 
-class GitAuthHandler(
-    private val settings: GitSourceSettings,
-    private val git: GitCommandManager
-) : IGitHandler {
+object GitAuthHelperFactory {
 
-    companion object {
-        private val logger = LoggerFactory.getLogger(GitAuthHandler::class.java)
-    }
-    private val authHelper = GitAuthHelperFactory.getAuthHelper(settings = settings, git = git)
+    private var gitAuthHelper: IGitAuthHelper? = null
 
-    override fun doHandle() {
-        val startEpoch = System.currentTimeMillis()
-        try {
-            logger.groupStart("Setting up auth")
-            authHelper.configureAuth()
-            if (settings.submodules) {
-                authHelper.configGlobalAuth()
-            }
-            logger.groupEnd("")
-        } finally {
-            EnvHelper.putContext(
-                key = ContextConstants.CONTEXT_AUTH_COST_TIME,
-                value = (System.currentTimeMillis() - startEpoch).toString()
+    fun getAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {
+        if (gitAuthHelper != null) {
+            return gitAuthHelper!!
+        }
+        /**
+         * 1. git < 1.7.10没有凭证管理,使用https://username:password@xxx这样的方式授权
+         * 2. 如果git版本支持了凭证管理，需要判断用户是否配置了全局凭证并且全局凭证不是git-checkout-credential产生的,
+         *    使用ask pass方式获取用户名密码,不然如果用户在拉代码后使用git config --global credential.helper 会报错
+         */
+        gitAuthHelper = if (git.isAtLeastVersion(GitConstants.SUPPORT_CRED_HELPER_GIT_VERSION)) {
+            val credentialHelperConfig = git.tryConfigGetAll(
+                configKey = GitConstants.GIT_CREDENTIAL_HELPER
             )
+            if (credentialHelperConfig.isEmpty() ||
+                credentialHelperConfig.any { it.contains(GIT_CREDENTIAL_HELPER_VALUE_REGEX) }
+            ) {
+                CredentialAuthHelper(git, settings)
+            } else {
+                AskPassGitAuthHelper(git, settings)
+            }
+        } else {
+            UsernamePwdGitAuthHelper(git, settings)
         }
-    }
-
-    override fun afterHandle() {
-        logger.groupStart("removing auth")
-        // 临时全局配置,执行完就清理
-        if (settings.submodules) {
-            authHelper.removeGlobalAuth()
-        }
-        if (!settings.persistCredentials) {
-            authHelper.removeAuth()
-        }
-        logger.groupEnd("")
+        return gitAuthHelper!!
     }
 }

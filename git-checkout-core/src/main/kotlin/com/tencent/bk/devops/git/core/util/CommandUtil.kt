@@ -120,7 +120,7 @@ object CommandUtil {
         }
         val command = CommandLine.parse(executable).addArguments(args.toTypedArray(), false)
         if (printLogger) {
-            println("##[command]$ ${command.toStrings().joinToString(" ")}")
+            println("##[command]$ ${SensitiveLineParser.onParseLine(command.toStrings().joinToString(" "))}")
         }
         try {
             // 系统环境变量 + 运行时环境变量

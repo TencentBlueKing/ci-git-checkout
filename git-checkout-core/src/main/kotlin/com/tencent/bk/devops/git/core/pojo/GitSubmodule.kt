@@ -25,19 +25,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.helper
+package com.tencent.bk.devops.git.core.pojo
 
-interface IGitAuthHelper {
-
-    fun configureAuth()
-
-    fun removeAuth()
-
-    fun configGlobalAuth()
-
-    fun removeGlobalAuth()
-
-    fun configureSubmoduleAuth()
-
-    fun removeSubmoduleAuth()
-}
+data class GitSubmodule(
+    val name: String,
+    val path: String,
+    // 相对于主库路径
+    val relativePath: String,
+    val url: String,
+    val revision: String? = null,
+    val branch: String? = null
+)

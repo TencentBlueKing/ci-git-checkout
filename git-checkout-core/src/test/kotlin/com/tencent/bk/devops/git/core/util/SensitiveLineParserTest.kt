@@ -25,19 +25,34 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.helper
+package com.tencent.bk.devops.git.core.util
 
-interface IGitAuthHelper {
+import org.junit.Assert
+import org.junit.Test
 
-    fun configureAuth()
+class SensitiveLineParserTest {
 
-    fun removeAuth()
-
-    fun configGlobalAuth()
-
-    fun removeGlobalAuth()
-
-    fun configureSubmoduleAuth()
-
-    fun removeSubmoduleAuth()
+    @Test
+    fun onParseLine() {
+        var line = "git config --global --add url.http://abc:123456@git.example.com/.insteadOf git@git.example.com:"
+        Assert.assertEquals(
+            "git config --global --add url.http://abc:***@git.example.com/.insteadOf git@git.example.com:",
+            SensitiveLineParser.onParseLine(line)
+        )
+        line = "git config --global --add url.https://abc:123456@git.example.com/.insteadOf http://git.example.com/"
+        Assert.assertEquals(
+            "git config --global --add url.https://abc:***@git.example.com/.insteadOf http://git.example.com/",
+            SensitiveLineParser.onParseLine(line)
+        )
+        line = "url.https://oauth2:123456@git.example.com/.insteadOf http://git.example.com/"
+        Assert.assertEquals(
+            "url.https://oauth2:***@git.example.com/.insteadOf http://git.example.com/",
+            SensitiveLineParser.onParseLine(line)
+        )
+        line = "http://git.example.com/?password=12345"
+        Assert.assertEquals(
+            "http://git.example.com/?password=***",
+            SensitiveLineParser.onParseLine(line)
+        )
+    }
 }

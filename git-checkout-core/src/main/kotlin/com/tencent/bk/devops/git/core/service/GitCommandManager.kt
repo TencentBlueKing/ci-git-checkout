@@ -52,10 +52,11 @@ import com.tencent.bk.devops.git.core.util.RegexUtil
 import com.tencent.devops.git.log.LogType
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.InputStream
 
 @Suppress("ALL")
 class GitCommandManager(
-    private val workingDirectory: File,
+    val workingDirectory: File,
     val lfs: Boolean = false
 ) {
 
@@ -182,7 +183,7 @@ class GitCommandManager(
         configValueRegex: String? = null,
         configScope: GitConfigScope = GitConfigScope.LOCAL,
         configFile: String? = null
-    ): String {
+    ): List<String> {
         val output = execGit(
             args = configArgs(
                 configKey = configKey,
@@ -194,9 +195,9 @@ class GitCommandManager(
             allowAllExitCodes = true
         )
         if (output.exitCode != 0) {
-            return ""
+            return emptyList()
         }
-        return output.stdOut
+        return output.stdOuts
     }
 
     fun tryConfigUnset(
@@ -305,8 +306,8 @@ class GitCommandManager(
         gitEnv[name] = value
     }
 
-    fun removeEnvironmentVariable(name: String) {
-        gitEnv.remove(name)
+    fun removeEnvironmentVariable(name: String): String? {
+        return gitEnv.remove(name)
     }
 
     fun submoduleSync(recursive: Boolean, path: String) {
@@ -327,15 +328,6 @@ class GitCommandManager(
         }
         args.add(command)
         execGit(args = args, allowAllExitCodes = true, logType = LogType.PROGRESS)
-    }
-
-    fun submoduleForeach(command: List<String>, recursive: Boolean) {
-        val args = mutableListOf("submodule", "foreach")
-        if (recursive) {
-            args.add("--recursive")
-        }
-        args.addAll(command)
-        execGit(args = args, allowAllExitCodes = true)
     }
 
     fun submoduleUpdate(recursive: Boolean, path: String, submoduleRemote: Boolean) {
@@ -485,6 +477,9 @@ class GitCommandManager(
     }
 
     fun isAtLeastVersion(requestedVersion: Long): Boolean {
+        if (gitVersion == 0L) {
+            getGitVersion()
+        }
         return VersionHelper.isAtLeastVersion(
             gitVersion = gitVersion,
             requestedVersion = requestedVersion
@@ -526,6 +521,19 @@ class GitCommandManager(
         val args = mutableListOf("read-tree")
         args.addAll(options)
         execGit(args = args, allowAllExitCodes = true)
+    }
+
+    fun credentialStore(inputStream: InputStream) {
+        val args = listOf("credential", "store")
+        CommandUtil.execute(
+            workingDirectory = workingDirectory,
+            executable = "git",
+            args = args,
+            runtimeEnv = gitEnv,
+            inputStream = inputStream,
+            allowAllExitCodes = true,
+            printLogger = false
+        )
     }
 
     private fun execGit(
