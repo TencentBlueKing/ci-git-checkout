@@ -532,7 +532,7 @@ class GitCommandManager(
             runtimeEnv = gitEnv,
             inputStream = inputStream,
             allowAllExitCodes = true,
-            printLogger = false
+            printLogger = true
         )
     }
 
