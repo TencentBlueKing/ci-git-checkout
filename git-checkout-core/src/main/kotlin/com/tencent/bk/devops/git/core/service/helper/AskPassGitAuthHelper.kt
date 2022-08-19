@@ -30,6 +30,7 @@ package com.tencent.bk.devops.git.core.service.helper
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION
+import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.enums.OSType
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
@@ -94,6 +95,12 @@ class AskPassGitAuthHelper(
             git.tryConfigUnset(configKey = GitConstants.CORE_ASKPASS)
             git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
         }
+    }
+
+    override fun configGlobalAuth() {
+        super.configGlobalAuth()
+        // 临时卸载全局凭证,保证插件的core.askpass一定会生效
+        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER, configScope = GitConfigScope.GLOBAL)
     }
 
     /**

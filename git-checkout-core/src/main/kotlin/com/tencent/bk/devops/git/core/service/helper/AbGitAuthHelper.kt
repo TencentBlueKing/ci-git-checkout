@@ -104,7 +104,7 @@ abstract class AbGitAuthHelper(
 
     override fun removeSubmoduleAuth() {
         val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
-        git.submoduleForeach("git config --unset-all $insteadOfKey", settings.nestedSubmodules)
+        git.submoduleForeach("git config --remove-section $insteadOfKey", settings.nestedSubmodules)
     }
 
     abstract fun configureHttp()

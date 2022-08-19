@@ -524,7 +524,7 @@ class GitCommandManager(
     }
 
     fun credentialStore(inputStream: InputStream) {
-        val args = listOf("credential", "store")
+        val args = listOf("credential", "approve")
         CommandUtil.execute(
             workingDirectory = workingDirectory,
             executable = "git",
