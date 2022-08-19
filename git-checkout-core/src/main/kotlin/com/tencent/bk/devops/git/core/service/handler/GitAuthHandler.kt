@@ -65,7 +65,7 @@ class GitAuthHandler(
         logger.groupStart("removing auth")
         // 临时全局配置,执行完就清理
         if (settings.submodules) {
-            authHelper.removeGlobalAuth()
+            // authHelper.removeGlobalAuth()
         }
         if (!settings.persistCredentials) {
             authHelper.removeAuth()
