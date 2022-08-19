@@ -149,7 +149,7 @@ class AskPassGitAuthHelper(
             }
         }
         git.submoduleForeach(
-            "git config --unset core.askpass ${askpass!!.absolutePath}",
+            "git config --unset core.askpass",
             settings.nestedSubmodules
         )
     }
