@@ -116,21 +116,16 @@ class CredentialAuthHelper(
         // 凭证管理必须安装在全局,否则无法传递给其他插件
         if (!git.configExists(
                 configKey = GIT_CREDENTIAL_HELPER,
-                configValueRegex = GIT_CREDENTIAL_HELPER_VALUE_REGEX
+                configValueRegex = GIT_CREDENTIAL_HELPER_VALUE_REGEX,
+                configScope = GitConfigScope.GLOBAL
             )
         ) {
             git.configAdd(
                 configKey = GIT_CREDENTIAL_HELPER,
                 configValue = "!bash '$credentialShellPath'",
-                configScope = GitConfigScope.SYSTEM
+                configScope = GitConfigScope.GLOBAL
             )
         }
-        // 卸载配置在全局的git-checkout-credential凭证
-        git.tryConfigUnset(
-            configKey = GIT_CREDENTIAL_HELPER,
-            configValueRegex = GIT_CREDENTIAL_HELPER_VALUE_REGEX,
-            configScope = GitConfigScope.GLOBAL
-        )
     }
 
     private fun store() {
