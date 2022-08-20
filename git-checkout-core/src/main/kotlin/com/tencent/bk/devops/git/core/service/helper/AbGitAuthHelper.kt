@@ -111,7 +111,10 @@ abstract class AbGitAuthHelper(
         val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
         git.submoduleForeach("git config --unset-all $insteadOfKey || true", settings.nestedSubmodules)
         // git低版本卸载insteadOf后,但是url.*并没有卸载,需要指定再卸载
-        git.submoduleForeach("git config --remove-section $insteadOfKey || true", settings.nestedSubmodules)
+        git.submoduleForeach(
+            "git config --remove-section url.${serverInfo.origin}/ || true",
+            settings.nestedSubmodules
+        )
     }
 
     abstract fun configureHttp()

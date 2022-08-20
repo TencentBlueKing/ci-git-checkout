@@ -77,7 +77,7 @@ class CacheSecureStore : ICredentialStore {
         if (!vmSeqId.isNullOrBlank()) {
             socketPath = File(socketPath, vmSeqId)
         }
-        socketPath = File(socketPath, "socket")
+        socketPath = File(socketPath, "credential/socket")
         return socketPath.absolutePath
     }
 }

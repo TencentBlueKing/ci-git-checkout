@@ -125,19 +125,9 @@ class AskPassGitAuthHelper(
 
     override fun configureSubmoduleAuth() {
         super.configureSubmoduleAuth()
-        if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            getHostList().forEach { host ->
-                listOf("http", "https").forEach { protocol ->
-                    git.submoduleForeach(
-                        "git config credential.$protocol://$host.helper '' ",
-                        settings.nestedSubmodules
-                    )
-                }
-            }
-        }
         if (askpass != null) {
             git.submoduleForeach(
-                "git config core.askpass ${askpass!!.absolutePath}",
+                "git config core.askpass '${askpass!!.absolutePath}'",
                 settings.nestedSubmodules
             )
         }
@@ -145,16 +135,6 @@ class AskPassGitAuthHelper(
 
     override fun removeSubmoduleAuth() {
         super.removeSubmoduleAuth()
-        if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            getHostList().forEach { host ->
-                listOf("http", "https").forEach { protocol ->
-                    git.submoduleForeach(
-                        "git config --unset credential.$protocol://$host.helper || true",
-                        settings.nestedSubmodules
-                    )
-                }
-            }
-        }
         git.submoduleForeach(
             "git config --unset core.askpass || true",
             settings.nestedSubmodules
