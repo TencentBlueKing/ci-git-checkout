@@ -81,7 +81,7 @@ abstract class AbGitAuthHelper(
         } else {
             Files.createFile(newGitConfigPath)
         }
-        logger.info("Temporarily overriding HOME='$tempHomePath' before making global git config changes")
+        logger.info("Temporarily overriding HOME='$tempHomePath' for fetching submodules")
         git.setEnvironmentVariable(HOME, tempHomePath.toString())
         if (AgentEnv.isThirdParty()) {
             unsetInsteadOf()
@@ -102,9 +102,12 @@ abstract class AbGitAuthHelper(
         val insteadOfHosts = getHostList()
         // 卸载上一步没有清理干净的insteadOf
         git.submoduleForeach("git config --unset-all $insteadOfKey || true", settings.nestedSubmodules)
-        insteadOfHosts.forEach { host ->
-            git.submoduleForeach("git config --add $insteadOfKey git@$host:", settings.nestedSubmodules)
+
+        // windows 执行一条git submodule foreach都需要很久时间,将insteadOf组装在一起节省执行时间
+        val command = insteadOfHosts.joinToString(" || ") { host ->
+            " git config --add $insteadOfKey git@$host: "
         }
+        git.submoduleForeach(command, settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
@@ -168,7 +171,7 @@ abstract class AbGitAuthHelper(
     /**
      * 删除全局的insteadOf
      */
-    private fun unsetInsteadOf() {
+    protected fun unsetInsteadOf() {
         val insteadOfHosts = getHostList()
         if (serverInfo.httpProtocol) {
             insteadOfHosts.forEach { host ->

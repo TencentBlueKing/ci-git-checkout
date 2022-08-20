@@ -42,6 +42,7 @@ import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
+import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.CommandUtil
 import com.tencent.bk.devops.git.core.util.EnvHelper
 import org.apache.commons.codec.digest.DigestUtils
@@ -49,6 +50,7 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URL
+import java.nio.file.Paths
 
 /**
  * 使用自定义git-checkout-credential凭证
@@ -73,6 +75,11 @@ class CredentialAuthHelper(
     private val credentialHome = File(System.getProperty("user.home"), ".checkout").absolutePath
     private val credentialJarPath = File(credentialHome, credentialJarFileName).absolutePath
     private val credentialShellPath = File(credentialHome, credentialShellFileName).absolutePath
+    private val gitXdgConfigHome = Paths.get(credentialHome,
+        System.getenv(GitConstants.BK_CI_PIPELINE_ID) ?: "",
+        System.getenv(BK_CI_BUILD_JOB_ID) ?: ""
+    ).toString()
+    private val gitXdgConfigFile = Paths.get(gitXdgConfigHome, "git", "config").toString()
 
     override fun configureHttp() {
         if (!serverInfo.httpProtocol ||
@@ -186,6 +193,33 @@ class CredentialAuthHelper(
     }
 
     private fun getJavaFilePath() = File(System.getProperty("java.home"), "/bin/java").absolutePath
+
+    /**
+     * 自定义凭证有的凭证读取依赖HOME环境变量，不能覆盖HOME，所以覆盖XDG_CONFIG_HOME
+     */
+    override fun configGlobalAuth() {
+        // 蓝盾默认镜像中有insteadOf,应该卸载,不然在凭证传递到下游插件时会导致凭证失效
+        if (!AgentEnv.isThirdParty()) {
+            unsetInsteadOf()
+        }
+        logger.info("Temporarily overriding XDG_CONFIG_HOME='$gitXdgConfigHome' for fetching submodules")
+        if (!File(gitXdgConfigFile).exists()) {
+            File(gitXdgConfigFile).parentFile.mkdirs()
+        }
+        git.setEnvironmentVariable(GitConstants.XDG_CONFIG_HOME, gitXdgConfigHome)
+        if (AgentEnv.isThirdParty()) {
+            unsetInsteadOf()
+        }
+        insteadOf()
+    }
+
+    override fun removeGlobalAuth() {
+        val tempHome = git.removeEnvironmentVariable(GitConstants.XDG_CONFIG_HOME)
+        if (!tempHome.isNullOrBlank()) {
+            logger.info("Deleting Temporarily XDG_CONFIG_HOME='$tempHome'")
+            FileUtils.deleteDirectory(File(tempHome))
+        }
+    }
 
     override fun removeAuth() {
         if (!serverInfo.httpProtocol) {
