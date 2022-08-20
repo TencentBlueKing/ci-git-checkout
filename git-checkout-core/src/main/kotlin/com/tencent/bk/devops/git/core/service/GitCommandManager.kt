@@ -532,7 +532,9 @@ class GitCommandManager(
             runtimeEnv = gitEnv,
             inputStream = inputStream,
             allowAllExitCodes = true,
-            printLogger = true
+            printLogger = true,
+            // git 低版本的credential-cache错误流没有关闭,导致程序会挂起,需要不捕获错误流
+            handleErrStream = false
         )
     }
 

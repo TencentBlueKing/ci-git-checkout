@@ -54,7 +54,7 @@ object CommandUtil {
      */
     private const val MAX_LOG_SIZE = 100
 
-    @SuppressWarnings("LongParameterList", "ComplexMethod")
+    @SuppressWarnings("LongParameterList", "ComplexMethod", "LongMethod")
     fun execute(
         workingDirectory: File? = null,
         executable: String,
@@ -63,7 +63,8 @@ object CommandUtil {
         inputStream: InputStream? = null,
         allowAllExitCodes: Boolean = false,
         logType: LogType = LogType.TEXT,
-        printLogger: Boolean = true
+        printLogger: Boolean = true,
+        handleErrStream: Boolean = true
     ): GitOutput {
         val executor = CommandLineExecutor()
         if (workingDirectory != null) {
@@ -91,28 +92,32 @@ object CommandUtil {
             }
         }
 
-        val errorStream = object : GitLogOutputStream(logType) {
-            override fun processLine(line: String?, level: Int) {
-                if (line == null) {
-                    return
+        val errorStream = if (handleErrStream) {
+            object : GitLogOutputStream(logType) {
+                override fun processLine(line: String?, level: Int) {
+                    if (line == null) {
+                        return
+                    }
+                    val tmpLine = SensitiveLineParser.onParseLine(line)
+                    if (printLogger && !allowAllExitCodes) {
+                        System.err.println("  $tmpLine")
+                    }
+                    val tmpGitErrors = parseError(line.trim())
+                    if (tmpGitErrors != null) {
+                        gitErrors = tmpGitErrors
+                    }
+                    val tmpGitPackingPhase = RegexUtil.parseReport(tmpLine)
+                    if (tmpGitPackingPhase != null) {
+                        gitPackingPhase = tmpGitPackingPhase
+                    }
+                    if (errOuts.size > MAX_LOG_SIZE) {
+                        errOuts.clear()
+                    }
+                    errOuts.add(tmpLine)
                 }
-                val tmpLine = SensitiveLineParser.onParseLine(line)
-                if (printLogger && !allowAllExitCodes) {
-                    System.err.println("  $tmpLine")
-                }
-                val tmpGitErrors = parseError(line.trim())
-                if (tmpGitErrors != null) {
-                    gitErrors = tmpGitErrors
-                }
-                val tmpGitPackingPhase = RegexUtil.parseReport(tmpLine)
-                if (tmpGitPackingPhase != null) {
-                    gitPackingPhase = tmpGitPackingPhase
-                }
-                if (errOuts.size > MAX_LOG_SIZE) {
-                    errOuts.clear()
-                }
-                errOuts.add(tmpLine)
             }
+        } else {
+            null
         }
         executor.streamHandler = PumpStreamHandler(outputStream, errorStream, inputStream)
         if (allowAllExitCodes) {

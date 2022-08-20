@@ -149,14 +149,14 @@ class AskPassGitAuthHelper(
             getHostList().forEach { host ->
                 listOf("http", "https").forEach { protocol ->
                     git.submoduleForeach(
-                        "git config --unset credential.$protocol://$host.helper",
+                        "git config --unset credential.$protocol://$host.helper || true",
                         settings.nestedSubmodules
                     )
                 }
             }
         }
         git.submoduleForeach(
-            "git config --unset core.askpass",
+            "git config --unset core.askpass || true",
             settings.nestedSubmodules
         )
     }
