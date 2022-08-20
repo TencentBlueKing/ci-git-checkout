@@ -70,7 +70,10 @@ abstract class AbGitAuthHelper(
             unsetInsteadOf()
         }
         val tempHomePath = Files.createTempDirectory("checkout")
-        val gitConfigPath = Paths.get(System.getenv(HOME), ".gitconfig")
+        val gitConfigPath = Paths.get(
+            System.getenv(HOME) ?: System.getProperty("user.home"),
+            ".gitconfig"
+        )
         val newGitConfigPath = Paths.get(tempHomePath.toString(), ".gitconfig")
         if (Files.exists(gitConfigPath)) {
             logger.info("Copying $gitConfigPath to $newGitConfigPath")

@@ -68,7 +68,6 @@ class PrepareWorkspaceHandler(
                 isExisting = false
                 workingDirectory.mkdirs()
             }
-            git.getGitVersion()
             // 如果仓库不存在,并且配置了缓存路径,则先从缓存路径下载.git文件
             if (!File(repositoryPath, ".git").exists() && !cachePath.isNullOrBlank()) {
                 val startEpoch = System.currentTimeMillis()

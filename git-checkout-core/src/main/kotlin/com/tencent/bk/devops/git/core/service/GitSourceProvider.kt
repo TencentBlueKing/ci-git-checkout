@@ -71,7 +71,7 @@ class GitSourceProvider(
             }
             val workingDirectory = File(repositoryPath)
             val git = GitCommandManager(workingDirectory = workingDirectory, lfs = lfs)
-
+            git.getGitVersion()
             val handlerChain = HandlerExecutionChain(
                 listOf(
                     PrepareWorkspaceHandler(settings, git),

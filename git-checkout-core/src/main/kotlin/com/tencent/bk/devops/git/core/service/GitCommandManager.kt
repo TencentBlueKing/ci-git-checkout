@@ -268,7 +268,7 @@ class GitCommandManager(
             #2 当构建机重启后，worker-agent自启动会导致HOME环境变量丢失,在执行全局配置时会报fatal: $HOME not set
             将全局环境变量变成本地,此时凭证无法全局传递，只能在当前仓库传递
          */
-        if (System.getenv(HOME) == null && configScope == GitConfigScope.GLOBAL) {
+        if (System.getenv(HOME) == null && gitEnv[HOME] == null && configScope == GitConfigScope.GLOBAL) {
             scope = GitConfigScope.LOCAL
         }
         // 低于git 1.9以下的版本没有--local参数,所以--local直接去掉
