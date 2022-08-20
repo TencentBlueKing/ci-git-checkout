@@ -29,6 +29,7 @@ package com.tencent.bk.devops.git.core.service.helper
 
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
+import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
@@ -64,6 +65,11 @@ class UsernamePwdGitAuthHelper(
                 replaceUrl(sourceRepositoryUrl, GitConstants.DEVOPS_VIRTUAL_REMOTE_NAME)
             }
         }
+        git.config(
+            configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER,
+            configValue = AuthHelperType.USERNAME_PASSWORD.name
+        )
+        EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.USERNAME_PASSWORD.name)
     }
 
     private fun replaceUrl(url: String, remoteName: String) {

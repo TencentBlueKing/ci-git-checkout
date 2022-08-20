@@ -30,6 +30,7 @@ package com.tencent.bk.devops.git.core.service.helper
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION
+import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.enums.OSType
@@ -71,6 +72,8 @@ class AskPassGitAuthHelper(
         }
         git.setEnvironmentVariable(GitConstants.GIT_ASKPASS, askpass!!.absolutePath)
         git.config(configKey = GitConstants.CORE_ASKPASS, configValue = askpass!!.absolutePath)
+        git.config(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER, configValue = AuthHelperType.ASK_PASS.name)
+        EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.ASK_PASS.name)
         /**
          * 1. 调用全局凭证管理,将用户名密码保存到凭证管理中使凭证能够向下游插件传递,同时覆盖构建机上错误的凭证
          * 2. 保存全局凭证必须在禁用凭证之前,否则调用全局凭证无用

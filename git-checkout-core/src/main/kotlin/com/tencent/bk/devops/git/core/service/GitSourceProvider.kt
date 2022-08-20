@@ -100,7 +100,7 @@ class GitSourceProvider(
                 return
             }
             val git = GitCommandManager(workingDirectory = workingDirectory, lfs = false)
-            val authHelper = GitAuthHelperFactory.getAuthHelper(git = git, settings = settings)
+            val authHelper = GitAuthHelperFactory.getCleanUpAuthHelper(git = git, settings = settings)
             if (settings.submodules && settings.persistCredentials) {
                 authHelper.removeSubmoduleAuth()
             }

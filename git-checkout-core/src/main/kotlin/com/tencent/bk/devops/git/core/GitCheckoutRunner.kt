@@ -33,8 +33,6 @@ import com.tencent.bk.devops.atom.pojo.AtomBaseParam
 import com.tencent.bk.devops.atom.pojo.MonitorData
 import com.tencent.bk.devops.atom.pojo.StringData
 import com.tencent.bk.devops.git.core.api.DevopsApi
-import com.tencent.bk.devops.git.core.constant.GitConstants
-import com.tencent.bk.devops.git.core.constant.GitConstants.BK_CI_ATOM_CODE
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_AUTH_COST_TIME
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_BKREPO_DOWNLOAD_COST_TIME
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_BKREPO_DOWNLOAD_RESULT
@@ -51,6 +49,8 @@ import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_SUBMODUL
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_TOTAL_SIZE
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_TRANSFER_RATE
 import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_USER_ID
+import com.tencent.bk.devops.git.core.constant.GitConstants
+import com.tencent.bk.devops.git.core.constant.GitConstants.BK_CI_ATOM_CODE
 import com.tencent.bk.devops.git.core.enums.FetchStrategy
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.exception.TaskExecuteException
@@ -156,7 +156,8 @@ class GitCheckoutRunner {
                     bkRepoDownloadResult = EnvHelper.getContext(CONTEXT_BKREPO_DOWNLOAD_RESULT) ?: "",
                     transferRate = EnvHelper.getContext(CONTEXT_TRANSFER_RATE)?.toDouble() ?: 0.0,
                     totalSize = EnvHelper.getContext(CONTEXT_TOTAL_SIZE)?.toDouble() ?: 0.0,
-                    errorInfo = EnvHelper.getContext(CONTEXT_ERROR_INFO) ?: ""
+                    errorInfo = EnvHelper.getContext(CONTEXT_ERROR_INFO) ?: "",
+                    authHelper = EnvHelper.getContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER) ?: ""
                 )
             }
             ServiceLoader.load(IGitMetricsHelper::class.java).firstOrNull()

@@ -28,7 +28,9 @@
 package com.tencent.bk.devops.git.core.service.helper
 
 import com.tencent.bk.devops.git.core.constant.GitConstants
+import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_AUTH_HELPER
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
+import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 
@@ -60,5 +62,17 @@ object GitAuthHelperFactory {
             UsernamePwdGitAuthHelper(git, settings)
         }
         return gitAuthHelper!!
+    }
+
+    fun getCleanUpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {
+        return when (git.tryConfigGet(configKey = GIT_CREDENTIAL_AUTH_HELPER)) {
+            AuthHelperType.CUSTOM_CREDENTIAL.name ->
+                CredentialAuthHelper(git, settings)
+            AuthHelperType.ASK_PASS.name ->
+                AskPassGitAuthHelper(git, settings)
+            AuthHelperType.USERNAME_PASSWORD.name ->
+                UsernamePwdGitAuthHelper(git, settings)
+            else -> getAuthHelper(git, settings)
+        }
     }
 }
