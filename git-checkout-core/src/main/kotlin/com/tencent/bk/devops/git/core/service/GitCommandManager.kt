@@ -37,6 +37,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_TRACE
 import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_PARTIAL_CLONE_GIT_VERSION
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_RECURSE_SUBMODULES_VERSION
+import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_SUBMODULE_SYNC_RECURSIVE_GIT_VERSION
 import com.tencent.bk.devops.git.core.enums.FilterValueEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.OSType
@@ -312,7 +313,8 @@ class GitCommandManager(
 
     fun submoduleSync(recursive: Boolean, path: String) {
         val args = mutableListOf("submodule", "sync")
-        if (recursive) {
+        // git submodule sync --recursive在1.8.1才支持
+        if (recursive && isAtLeastVersion(SUPPORT_SUBMODULE_SYNC_RECURSIVE_GIT_VERSION)) {
             args.add("--recursive")
         }
         if (path.isNotBlank()) {
