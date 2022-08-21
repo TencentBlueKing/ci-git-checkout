@@ -211,7 +211,7 @@ class CredentialAuthHelper(
                 "Temporarily overriding XDG_CONFIG_HOME='$gitXdgConfigHome' for fetching submodules"
         )
         // 3. 设置临时的xdg_config_home
-        Files.deleteIfExists(Paths.get(tempHome))
+        FileUtils.deleteDirectory(File(tempHome))
         git.setEnvironmentVariable(GitConstants.XDG_CONFIG_HOME, gitXdgConfigHome)
     }
 

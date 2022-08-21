@@ -106,7 +106,7 @@ abstract class AbGitAuthHelper(
         val setCommand = insteadOfHosts.joinToString(";") { host ->
             " git config --add $insteadOfKey git@$host: "
         }
-        git.submoduleForeach("'$unsetCommand; $setCommand || true'", settings.nestedSubmodules)
+        git.submoduleForeach("$unsetCommand; $setCommand || true", settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
