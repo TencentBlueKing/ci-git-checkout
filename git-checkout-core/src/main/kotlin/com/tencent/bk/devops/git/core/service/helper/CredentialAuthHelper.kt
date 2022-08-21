@@ -42,7 +42,6 @@ import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
-import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.CommandUtil
 import com.tencent.bk.devops.git.core.util.EnvHelper
 import org.apache.commons.codec.digest.DigestUtils
@@ -50,6 +49,7 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URL
+import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
@@ -75,11 +75,6 @@ class CredentialAuthHelper(
     private val credentialHome = File(System.getProperty("user.home"), ".checkout").absolutePath
     private val credentialJarPath = File(credentialHome, credentialJarFileName).absolutePath
     private val credentialShellPath = File(credentialHome, credentialShellFileName).absolutePath
-    private val gitXdgConfigHome = Paths.get(credentialHome,
-        System.getenv(GitConstants.BK_CI_PIPELINE_ID) ?: "",
-        System.getenv(BK_CI_BUILD_JOB_ID) ?: ""
-    ).toString()
-    private val gitXdgConfigFile = Paths.get(gitXdgConfigHome, "git", "config").toString()
 
     override fun configureHttp() {
         if (!serverInfo.httpProtocol ||
@@ -195,29 +190,37 @@ class CredentialAuthHelper(
     private fun getJavaFilePath() = File(System.getProperty("java.home"), "/bin/java").absolutePath
 
     /**
-     * 自定义凭证有的凭证读取依赖HOME环境变量，不能覆盖HOME，所以覆盖XDG_CONFIG_HOME
+     * 自定义凭证读取凭证(如mac读取钥匙串,cache读取~/.cache)依赖HOME环境变量，不能覆盖HOME，所以覆盖XDG_CONFIG_HOME
      */
-    override fun configGlobalAuth() {
-        // 蓝盾默认镜像中有insteadOf,应该卸载,不然在凭证传递到下游插件时会导致凭证失效
-        if (!AgentEnv.isThirdParty()) {
-            unsetInsteadOf()
-        }
-        logger.info("Temporarily overriding XDG_CONFIG_HOME='$gitXdgConfigHome' for fetching submodules")
-        if (!File(gitXdgConfigFile).exists()) {
-            File(gitXdgConfigFile).parentFile.mkdirs()
-        }
+    override fun configGlobalAuth(copyGlobalConfig: Boolean) {
+        // 1. 先设置全局的insteadOf,把配置写到临时的全局配置文件中
+        super.configGlobalAuth(copyGlobalConfig = false)
+        // 2. 移除全局配置,然后把配置文件复制到xdg_config_home的git/config中，
+        // git配置读取顺序是: home->xdg_config_home->~/.gitconfig->.git/config
+        val tempHome = git.removeEnvironmentVariable(GitConstants.HOME)
+        val gitConfigPath = Paths.get(tempHome!!, ".gitconfig")
+        val gitXdgConfigHome = Paths.get(
+            credentialHome,
+            System.getenv(GitConstants.BK_CI_PIPELINE_ID) ?: "",
+            System.getenv(BK_CI_BUILD_JOB_ID) ?: ""
+        ).toString()
+        val gitXdgConfigFile = Paths.get(gitXdgConfigHome, "git", "config")
+        FileUtils.copyFile(gitConfigPath.toFile(), gitXdgConfigFile.toFile())
+        logger.info(
+            "Removing Temporarily HOME AND " +
+                "Temporarily overriding XDG_CONFIG_HOME='$gitXdgConfigHome' for fetching submodules"
+        )
+        // 3. 设置临时的xdg_config_home
+        Files.deleteIfExists(Paths.get(tempHome))
         git.setEnvironmentVariable(GitConstants.XDG_CONFIG_HOME, gitXdgConfigHome)
-        if (AgentEnv.isThirdParty()) {
-            unsetInsteadOf()
-        }
-        insteadOf()
     }
 
     override fun removeGlobalAuth() {
-        val tempHome = git.removeEnvironmentVariable(GitConstants.XDG_CONFIG_HOME)
-        if (!tempHome.isNullOrBlank()) {
-            logger.info("Deleting Temporarily XDG_CONFIG_HOME='$tempHome'")
-            FileUtils.deleteDirectory(File(tempHome))
+        val gitXdgConfigHome = git.removeEnvironmentVariable(GitConstants.XDG_CONFIG_HOME)
+        if (!gitXdgConfigHome.isNullOrBlank()) {
+            val gitXdgConfigFile = Paths.get(gitXdgConfigHome, "git", "config")
+            logger.info("Deleting Temporarily XDG_CONFIG_HOME='$gitXdgConfigHome'")
+            Files.deleteIfExists(gitXdgConfigFile)
         }
     }
 
@@ -225,6 +228,7 @@ class CredentialAuthHelper(
         if (!serverInfo.httpProtocol) {
             return
         }
+        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
         // 清理构建机上凭证
         if (File(credentialJarPath).exists()) {
             with(URL(settings.repositoryUrl).toURI()) {

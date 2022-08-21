@@ -102,6 +102,7 @@ class UsernamePwdGitAuthHelper(
                 git.remoteSetUrl(remoteName = GitConstants.DEVOPS_VIRTUAL_REMOTE_NAME, remoteUrl = sourceRepositoryUrl)
             }
         }
+        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
     }
 
     override fun configureSubmoduleAuth() {

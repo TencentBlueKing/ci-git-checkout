@@ -98,10 +98,11 @@ class AskPassGitAuthHelper(
             git.tryConfigUnset(configKey = GitConstants.CORE_ASKPASS)
             git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
         }
+        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
     }
 
-    override fun configGlobalAuth() {
-        super.configGlobalAuth()
+    override fun configGlobalAuth(copyGlobalConfig: Boolean) {
+        super.configGlobalAuth(true)
         // 临时卸载全局凭证,保证插件的core.askpass一定会生效
         git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER, configScope = GitConfigScope.GLOBAL)
     }
@@ -110,6 +111,7 @@ class AskPassGitAuthHelper(
      * 配置全局凭证,保证凭证能够向下游插件传递,兼容http和https
      */
     private fun storeCredential() {
+        logger.info("store global credential for other plugins")
         val credentialHosts = getHostList()
         // 同一服务多个域名时，需要保存不同域名的凭证
         credentialHosts.forEach { cHost ->

@@ -33,7 +33,10 @@ interface IGitAuthHelper {
 
     fun removeAuth()
 
-    fun configGlobalAuth()
+    /**
+     * @param copyGlobalConfig 是否复制全局变量
+     */
+    fun configGlobalAuth(copyGlobalConfig: Boolean = true)
 
     fun removeGlobalAuth()
 

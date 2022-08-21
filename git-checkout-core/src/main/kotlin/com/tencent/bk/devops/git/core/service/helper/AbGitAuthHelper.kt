@@ -64,7 +64,7 @@ abstract class AbGitAuthHelper(
         configureSsh()
     }
 
-    override fun configGlobalAuth() {
+    override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         // 蓝盾默认镜像中有insteadOf,应该卸载,不然在凭证传递到下游插件时会导致凭证失效
         if (!AgentEnv.isThirdParty()) {
             unsetInsteadOf()
@@ -75,7 +75,7 @@ abstract class AbGitAuthHelper(
             ".gitconfig"
         )
         val newGitConfigPath = Paths.get(tempHomePath.toString(), ".gitconfig")
-        if (Files.exists(gitConfigPath)) {
+        if (copyGlobalConfig && Files.exists(gitConfigPath)) {
             logger.info("Copying $gitConfigPath to $newGitConfigPath")
             Files.copy(gitConfigPath, newGitConfigPath)
         } else {
@@ -101,21 +101,20 @@ abstract class AbGitAuthHelper(
         val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
         val insteadOfHosts = getHostList()
         // 卸载上一步没有清理干净的insteadOf
-        git.submoduleForeach("git config --unset-all $insteadOfKey || true", settings.nestedSubmodules)
-
+        val unsetCommand = " git config --unset-all $insteadOfKey "
         // windows 执行一条git submodule foreach都需要很久时间,将insteadOf组装在一起节省执行时间
-        val command = insteadOfHosts.joinToString(" || ") { host ->
+        val setCommand = insteadOfHosts.joinToString(";") { host ->
             " git config --add $insteadOfKey git@$host: "
         }
-        git.submoduleForeach(command, settings.nestedSubmodules)
+        git.submoduleForeach("'$unsetCommand; $setCommand || true'", settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
         val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
-        git.submoduleForeach("git config --unset-all $insteadOfKey || true", settings.nestedSubmodules)
         // git低版本卸载insteadOf后,但是url.*并没有卸载,需要指定再卸载
         git.submoduleForeach(
-            "git config --remove-section url.${serverInfo.origin}/ || true",
+            " git config --unset-all $insteadOfKey; " +
+                "git config --remove-section url.${serverInfo.origin}/ || true",
             settings.nestedSubmodules
         )
     }
