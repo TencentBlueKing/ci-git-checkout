@@ -31,6 +31,7 @@ import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
+import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.enums.OSType
@@ -74,15 +75,38 @@ class AskPassGitAuthHelper(
         git.config(configKey = GitConstants.CORE_ASKPASS, configValue = askpass!!.absolutePath)
         git.config(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER, configValue = AuthHelperType.ASK_PASS.name)
         EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.ASK_PASS.name)
-        /**
-         * 1. 调用全局凭证管理,将用户名密码保存到凭证管理中使凭证能够向下游插件传递,同时覆盖构建机上错误的凭证
-         * 2. 保存全局凭证必须在禁用凭证之前,否则调用全局凭证无用
-         * 3. 保存的全局凭证在下游插件可能不生效，因为在同一个私有构建机，
-         *    如果同时执行多条流水线,每条流水线拉代码的账号oauth不同就可能被覆盖
-         */
         storeCredential()
         if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             git.tryDisableOtherGitHelpers()
+        }
+    }
+
+    /**
+     * 配置全局凭证,保证凭证能够向下游插件传递,兼容http和https
+     *
+     * 1. 调用全局凭证管理,将用户名密码保存到凭证管理中使凭证能够向下游插件传递,同时覆盖构建机上错误的凭证
+     * 2. 保存全局凭证必须在禁用凭证之前,否则调用全局凭证无用
+     * 3. 保存的全局凭证在下游插件可能不生效，因为在同一个私有构建机，
+     *    如果同时执行多条流水线,每条流水线拉代码的账号oauth不同就可能被覆盖
+     */
+    private fun storeCredential() {
+        if (settings.persistCredentials && !AgentEnv.isThirdParty()) {
+            logger.info("store and overriding global credential for other plugins")
+            val credentialHosts = getHostList()
+            // 同一服务多个域名时，需要保存不同域名的凭证
+            credentialHosts.forEach { cHost ->
+                listOf("https", "http").forEach { cProtocol ->
+                    git.credential(
+                        action = CredentialActionEnum.APPROVE,
+                        inputStream = CredentialArguments(
+                            protocol = cProtocol,
+                            host = cHost,
+                            username = authInfo.username,
+                            password = authInfo.password
+                        ).convertInputStream()
+                    )
+                }
+            }
         }
     }
 
@@ -104,27 +128,6 @@ class AskPassGitAuthHelper(
         super.configGlobalAuth(true)
         // 临时卸载全局凭证,保证插件的core.askpass一定会生效
         git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER, configScope = GitConfigScope.GLOBAL)
-    }
-
-    /**
-     * 配置全局凭证,保证凭证能够向下游插件传递,兼容http和https
-     */
-    private fun storeCredential() {
-        logger.info("store global credential for other plugins")
-        val credentialHosts = getHostList()
-        // 同一服务多个域名时，需要保存不同域名的凭证
-        credentialHosts.forEach { cHost ->
-            listOf("https", "http").forEach { cProtocol ->
-                git.credentialStore(
-                    CredentialArguments(
-                        protocol = cProtocol,
-                        host = cHost,
-                        username = authInfo.username,
-                        password = authInfo.password
-                    ).convertInputStream()
-                )
-            }
-        }
     }
 
     override fun configureSubmoduleAuth() {

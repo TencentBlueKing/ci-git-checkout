@@ -38,6 +38,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_PARTIAL_CLONE_GIT_VERSION
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_RECURSE_SUBMODULES_VERSION
 import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_SUBMODULE_SYNC_RECURSIVE_GIT_VERSION
+import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
 import com.tencent.bk.devops.git.core.enums.FilterValueEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.OSType
@@ -525,8 +526,8 @@ class GitCommandManager(
         execGit(args = args, allowAllExitCodes = true)
     }
 
-    fun credentialStore(inputStream: InputStream) {
-        val args = listOf("credential", "approve")
+    fun credential(action: CredentialActionEnum, inputStream: InputStream) {
+        val args = listOf("credential", action.value)
         CommandUtil.execute(
             workingDirectory = workingDirectory,
             executable = "git",

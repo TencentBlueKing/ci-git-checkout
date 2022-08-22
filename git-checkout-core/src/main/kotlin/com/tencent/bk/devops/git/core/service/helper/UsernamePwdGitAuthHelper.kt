@@ -75,7 +75,7 @@ class UsernamePwdGitAuthHelper(
 
     private fun replaceUrl(url: String, remoteName: String) {
         val uri = URI(url)
-        val authUrl = "${uri.scheme}://${authInfo.username}:${urlEncode(authInfo.password!!)}@${uri.host}/${uri.path}"
+        val authUrl = "${uri.scheme}://${authInfo.username}:${urlEncode(authInfo.password!!)}@${uri.host}${uri.path}"
         git.remoteSetUrl(remoteName = remoteName, remoteUrl = authUrl)
     }
 

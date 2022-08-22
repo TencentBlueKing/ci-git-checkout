@@ -37,6 +37,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPE
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_REPO_PATH
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
+import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
@@ -63,6 +64,7 @@ class CredentialAuthHelper(
 
     companion object {
         private val logger = LoggerFactory.getLogger(CredentialAuthHelper::class.java)
+        private const val OAUTH2 = "oauth2"
     }
 
     private val credentialVersion = VersionHelper.getCredentialVersion()
@@ -104,6 +106,23 @@ class CredentialAuthHelper(
             configValue = AuthHelperType.CUSTOM_CREDENTIAL.name
         )
         EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.CUSTOM_CREDENTIAL.name)
+        // 工蜂如果oauth2方式授权，如果token有效但是没有仓库的权限,返回状态码是200，但是会抛出repository not found异常,
+        // 导致凭证不会自动清理,所以如果是oauth2授权，先移除全局oauth2的凭证
+        if (authInfo.username == OAUTH2) {
+            // 同一服务多个域名时，需要保存不同域名的凭证
+            getHostList().forEach { cHost ->
+                listOf("https", "http").forEach { cProtocol ->
+                    git.credential(
+                        action = CredentialActionEnum.ERASE,
+                        inputStream = CredentialArguments(
+                            protocol = cProtocol,
+                            host = cHost,
+                            username = OAUTH2
+                        ).convertInputStream()
+                    )
+                }
+            }
+        }
         install()
         store()
     }
