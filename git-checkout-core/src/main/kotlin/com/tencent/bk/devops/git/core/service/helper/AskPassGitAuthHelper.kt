@@ -98,7 +98,6 @@ class AskPassGitAuthHelper(
             git.tryConfigUnset(configKey = GitConstants.CORE_ASKPASS)
             git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
         }
-        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
     }
 
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {

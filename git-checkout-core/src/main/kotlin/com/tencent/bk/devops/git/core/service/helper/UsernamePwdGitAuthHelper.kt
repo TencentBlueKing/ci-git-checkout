@@ -48,6 +48,7 @@ class UsernamePwdGitAuthHelper(
 
     companion object {
         private val logger = LoggerFactory.getLogger(UsernamePwdGitAuthHelper::class.java)
+        private const val INSTEADOF_URL_CONFIG = "core.insteadOfUrl"
     }
 
     override fun configureHttp() {
@@ -79,7 +80,7 @@ class UsernamePwdGitAuthHelper(
     }
 
     override fun insteadOf() {
-        val insteadOfKey = getInsteadofKey()
+        val insteadOfKey = getInsteadofUrl()
         val insteadOfHosts = getHostList()
         insteadOfHosts.forEach { host ->
             httpInsteadOfGit(
@@ -102,30 +103,45 @@ class UsernamePwdGitAuthHelper(
                 git.remoteSetUrl(remoteName = GitConstants.DEVOPS_VIRTUAL_REMOTE_NAME, remoteUrl = sourceRepositoryUrl)
             }
         }
-        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
     }
 
     override fun configureSubmoduleAuth() {
-        val insteadOfKey = getInsteadofKey()
+        val insteadOfUrl = getInsteadofUrl()
         val insteadOfHosts = getHostList()
-        insteadOfHosts.forEach { host ->
-            git.submoduleForeach("git config --add $insteadOfKey git@$host:", settings.nestedSubmodules)
+        val insteadOfKeyCommand = " git config core.insteadOfKey $insteadOfUrl "
+        val gitInsteadOfCommand = insteadOfHosts.joinToString(";") { host ->
+            " git config --add $insteadOfUrl git@$host: "
         }
+        val httpInsteadOfCommandBuilder = StringBuilder()
         insteadOfHosts.forEach { host ->
             listOf("http", "https").forEach { protocol ->
-                git.submoduleForeach(
-                    "git config --add $insteadOfKey $protocol://$host/",
-                    settings.nestedSubmodules
-                )
+                httpInsteadOfCommandBuilder.append(" git config --add $insteadOfUrl $protocol://$host/ ").append(";")
             }
         }
+        // 卸载子模块时,不知道子模块的insteadOf配置key，先暂存卸载时直接获取
+        git.config(
+            configKey = INSTEADOF_URL_CONFIG,
+            configValue = insteadOfUrl
+        )
+        git.submoduleForeach(
+            command = "$insteadOfKeyCommand;$gitInsteadOfCommand;$httpInsteadOfCommandBuilder",
+            recursive = settings.nestedSubmodules
+        )
     }
 
     override fun removeSubmoduleAuth() {
-        git.submoduleForeach("git config --unset-all ${getInsteadofKey()}", settings.nestedSubmodules)
+        val insteadOfUrl = git.tryConfigGet(configKey = INSTEADOF_URL_CONFIG)
+        if (insteadOfUrl.isNotBlank()) {
+            git.tryConfigUnset(configKey = INSTEADOF_URL_CONFIG)
+            git.submoduleForeach(
+                command = "git config --unset-all $insteadOfUrl; " +
+                    "git config --remove-section ${insteadOfUrl.removeSuffix(".insteadOf")}",
+                recursive = settings.nestedSubmodules
+            )
+        }
     }
 
-    private fun getInsteadofKey(): String {
+    private fun getInsteadofUrl(): String {
         val uri = URI(settings.repositoryUrl)
         return "url.${uri.scheme}://${authInfo.username}:${urlEncode(authInfo.password!!)}@${uri.host}/.insteadOf"
     }

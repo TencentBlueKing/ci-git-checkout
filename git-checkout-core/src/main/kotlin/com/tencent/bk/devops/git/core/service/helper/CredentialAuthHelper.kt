@@ -228,7 +228,6 @@ class CredentialAuthHelper(
         if (!serverInfo.httpProtocol) {
             return
         }
-        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER)
         // 清理构建机上凭证
         if (File(credentialJarPath).exists()) {
             with(URL(settings.repositoryUrl).toURI()) {

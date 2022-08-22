@@ -34,7 +34,12 @@ class SensitiveLineParserTest {
 
     @Test
     fun onParseLine() {
-        var line = "git config --global --add url.http://abc:123456@git.example.com/.insteadOf git@git.example.com:"
+        var line = "http://abc:123456@git.example.com/example.git"
+        Assert.assertEquals(
+            "http://abc:***@git.example.com/example.git",
+            SensitiveLineParser.onParseLine(line)
+        )
+        line = "git config --global --add url.http://abc:123456@git.example.com/.insteadOf git@git.example.com:"
         Assert.assertEquals(
             "git config --global --add url.http://abc:***@git.example.com/.insteadOf git@git.example.com:",
             SensitiveLineParser.onParseLine(line)
@@ -52,6 +57,15 @@ class SensitiveLineParserTest {
         line = "http://git.example.com/?password=12345"
         Assert.assertEquals(
             "http://git.example.com/?password=***",
+            SensitiveLineParser.onParseLine(line)
+        )
+        line = "git submodule foreach --recursive ' " +
+            "git config --unset-all url.https://git.example.com/.insteadOf ;  " +
+            "git config --add url.https://git.example.com/.insteadOf git@git.example.com: ; " +
+            "git config --add url.https://git.example.com/.insteadOf git@git.example.com: ; " +
+            "git config --add url.https://git.example.com/.insteadOf git@test.git.example.com:  || true'"
+        Assert.assertEquals(
+            line,
             SensitiveLineParser.onParseLine(line)
         )
     }
