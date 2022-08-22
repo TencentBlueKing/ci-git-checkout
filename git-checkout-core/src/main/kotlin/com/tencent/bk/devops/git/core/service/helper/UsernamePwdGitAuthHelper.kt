@@ -123,7 +123,7 @@ class UsernamePwdGitAuthHelper(
             configValue = insteadOfUrl
         )
         git.submoduleForeach(
-            command = "$gitInsteadOfCommand;$httpInsteadOfCommandBuilder || true",
+            command = "$gitInsteadOfCommand;${httpInsteadOfCommandBuilder.removeSuffix(";")} || true",
             recursive = settings.nestedSubmodules
         )
     }
@@ -134,7 +134,7 @@ class UsernamePwdGitAuthHelper(
             git.tryConfigUnset(configKey = INSTEADOF_URL_CONFIG)
             git.submoduleForeach(
                 command = "git config --unset-all $insteadOfUrl; " +
-                    "git config --remove-section ${insteadOfUrl.removeSuffix(".insteadOf")}",
+                    "git config --remove-section ${insteadOfUrl.removeSuffix(".insteadOf")} || true",
                 recursive = settings.nestedSubmodules
             )
         }
