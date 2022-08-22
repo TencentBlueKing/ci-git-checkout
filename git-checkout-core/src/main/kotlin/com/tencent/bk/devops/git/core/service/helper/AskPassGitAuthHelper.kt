@@ -138,12 +138,19 @@ class AskPassGitAuthHelper(
                 settings.nestedSubmodules
             )
         }
+        if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
+            git.submoduleForeach("git config credential.helper '' ", settings.nestedSubmodules)
+        }
     }
 
     override fun removeSubmoduleAuth() {
         super.removeSubmoduleAuth()
         git.submoduleForeach(
             "git config --unset core.askpass || true",
+            settings.nestedSubmodules
+        )
+        git.submoduleForeach(
+            "git config --unset credential.helper || true",
             settings.nestedSubmodules
         )
     }
