@@ -88,7 +88,7 @@ object CommandUtil {
                     gitErrors = tmpGitErrors
                 }
                 gitErrors = parseError(line.trim())
-                stdOuts.add(tmpLine)
+                stdOuts.add(line)
             }
         }
 
@@ -113,7 +113,7 @@ object CommandUtil {
                     if (errOuts.size > MAX_LOG_SIZE) {
                         errOuts.clear()
                     }
-                    errOuts.add(tmpLine)
+                    errOuts.add(line)
                 }
             }
         } else {
