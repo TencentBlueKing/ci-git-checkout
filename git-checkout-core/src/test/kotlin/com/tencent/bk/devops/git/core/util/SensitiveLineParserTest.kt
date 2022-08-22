@@ -68,5 +68,16 @@ class SensitiveLineParserTest {
             line,
             SensitiveLineParser.onParseLine(line)
         )
+        line = "git submodule foreach --recursive " +
+            "git config core.insteadOfKey " +
+            "url.https://oauth2:123456@git.example.com/.insteadOf ; " +
+            "git config --add " +
+            "url.https://oauth2:123456@git.example.com/.insteadOf git@git.woa.com:"
+        Assert.assertEquals(
+            "git submodule foreach --recursive " +
+                "git config core.insteadOfKey url.https://oauth2:***@git.example.com/.insteadOf ; " +
+                "git config --add url.https://oauth2:***@git.example.com/.insteadOf git@git.woa.com:",
+            SensitiveLineParser.onParseLine(line)
+        )
     }
 }

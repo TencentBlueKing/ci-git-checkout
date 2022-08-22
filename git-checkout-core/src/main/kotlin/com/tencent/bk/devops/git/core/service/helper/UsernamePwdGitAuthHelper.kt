@@ -108,7 +108,6 @@ class UsernamePwdGitAuthHelper(
     override fun configureSubmoduleAuth() {
         val insteadOfUrl = getInsteadofUrl()
         val insteadOfHosts = getHostList()
-        val insteadOfKeyCommand = " git config core.insteadOfKey $insteadOfUrl "
         val gitInsteadOfCommand = insteadOfHosts.joinToString(";") { host ->
             " git config --add $insteadOfUrl git@$host: "
         }
@@ -124,7 +123,7 @@ class UsernamePwdGitAuthHelper(
             configValue = insteadOfUrl
         )
         git.submoduleForeach(
-            command = "$insteadOfKeyCommand;$gitInsteadOfCommand;$httpInsteadOfCommandBuilder",
+            command = "$gitInsteadOfCommand;$httpInsteadOfCommandBuilder || true",
             recursive = settings.nestedSubmodules
         )
     }
