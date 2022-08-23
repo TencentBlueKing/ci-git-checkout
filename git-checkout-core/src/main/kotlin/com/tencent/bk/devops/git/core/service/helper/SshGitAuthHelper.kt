@@ -35,7 +35,6 @@ import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.exception.ParamInvalidException
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
-import com.tencent.bk.devops.git.core.util.CommandUtil
 import com.tencent.bk.devops.git.core.util.EnvHelper
 import com.tencent.bk.devops.git.core.util.SSHAgentUtils
 
@@ -55,7 +54,6 @@ class SshGitAuthHelper(
             configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER,
             configValue = AuthHelperType.SSH.name
         )
-        CommandUtil.execute(executable = "ssh", args = listOf("-T", serverInfo.origin), allowAllExitCodes = true)
     }
 
     override fun removeAuth() = Unit
