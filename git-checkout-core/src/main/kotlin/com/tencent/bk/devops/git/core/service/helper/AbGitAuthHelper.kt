@@ -27,25 +27,18 @@
 
 package com.tencent.bk.devops.git.core.service.helper
 
-import com.tencent.bk.devops.git.core.constant.ContextConstants
-import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
-import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
-import com.tencent.bk.devops.git.core.exception.ParamInvalidException
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.util.AgentEnv
-import com.tencent.bk.devops.git.core.util.EnvHelper
 import com.tencent.bk.devops.git.core.util.FileUtils
 import com.tencent.bk.devops.git.core.util.GitUtil
-import com.tencent.bk.devops.git.core.util.SSHAgentUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
-@SuppressWarnings("TooManyFunctions")
 abstract class AbGitAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
@@ -57,12 +50,6 @@ abstract class AbGitAuthHelper(
 
     protected val serverInfo = GitUtil.getServerInfo(settings.repositoryUrl)
     protected val authInfo = settings.authInfo
-    protected val credentialUserName = "${settings.pipelineId}_${settings.pipelineTaskId}"
-
-    override fun configureAuth() {
-        configureHttp()
-        configureSsh()
-    }
 
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         // 蓝盾默认镜像中有insteadOf,应该卸载,不然在凭证传递到下游插件时会导致凭证失效
@@ -97,65 +84,12 @@ abstract class AbGitAuthHelper(
         }
     }
 
-    override fun configureSubmoduleAuth() {
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
-        val insteadOfHosts = getHostList()
-        // 卸载上一步没有清理干净的insteadOf
-        val unsetCommand = " git config --unset-all $insteadOfKey "
-        // windows 执行一条git submodule foreach都需要很久时间,将insteadOf组装在一起节省执行时间
-        val setCommand = insteadOfHosts.joinToString(";") { host ->
-            " git config --add $insteadOfKey git@$host: "
-        }
-        git.submoduleForeach("$unsetCommand; $setCommand || true", settings.nestedSubmodules)
-    }
+    abstract fun insteadOf()
 
-    override fun removeSubmoduleAuth() {
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
-        // git低版本卸载insteadOf后,但是url.*并没有卸载,需要指定再卸载
-        git.submoduleForeach(
-            " git config --unset-all $insteadOfKey; " +
-                "git config --remove-section url.${serverInfo.origin}/ || true",
-            settings.nestedSubmodules
-        )
-    }
-
-    abstract fun configureHttp()
-
-    private fun configureSsh() {
-        if (serverInfo.httpProtocol) {
-            return
-        }
-        if (authInfo.privateKey.isNullOrBlank()) {
-            throw ParamInvalidException(errorMsg = "private key must not be empty")
-        }
-        EnvHelper.putContext(ContextConstants.CONTEXT_GIT_PROTOCOL, GitProtocolEnum.SSH.name)
-        SSHAgentUtils(privateKey = authInfo.privateKey, passPhrase = authInfo.passPhrase).addIdentity()
-        git.setEnvironmentVariable(GitConstants.GIT_SSH_COMMAND, GitConstants.GIT_SSH_COMMAND_VALUE)
-    }
-
-    protected open fun insteadOf() {
-        val insteadOfHosts = getHostList()
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
-        git.tryConfigUnset(
-            configKey = insteadOfKey,
-            configScope = GitConfigScope.GLOBAL
-        )
-        if (serverInfo.httpProtocol) {
-            insteadOfHosts.forEach { host ->
-                httpInsteadOfGit(
-                    host = host,
-                    insteadOfKey = insteadOfKey
-                )
-            }
-        } else {
-            insteadOfHosts.forEach { host ->
-                gitInsteadOfHttp(
-                    host = host,
-                    insteadOfKey = insteadOfKey
-                )
-            }
-        }
-    }
+    /**
+     * 删除全局的insteadOf
+     */
+    abstract fun unsetInsteadOf()
 
     protected fun getHostList(): MutableSet<String> {
         val insteadOfHosts = mutableSetOf(serverInfo.hostName)
@@ -167,30 +101,14 @@ abstract class AbGitAuthHelper(
         return insteadOfHosts
     }
 
-    /**
-     * 删除全局的insteadOf
-     */
-    protected fun unsetInsteadOf() {
-        val insteadOfHosts = getHostList()
-        if (serverInfo.httpProtocol) {
-            insteadOfHosts.forEach { host ->
-                unsetGitInsteadOfHttp(host = host)
-            }
-        } else {
-            insteadOfHosts.forEach { host ->
-                unsetHttpInsteadOfGit(host = host)
-            }
-        }
-    }
-
-    private fun unsetGitInsteadOfHttp(host: String) {
+    protected fun unsetGitInsteadOfHttp(host: String) {
         git.tryConfigUnset(
             configKey = "url.git@$host:.insteadof",
             configScope = GitConfigScope.GLOBAL
         )
     }
 
-    private fun unsetHttpInsteadOfGit(host: String) {
+    protected fun unsetHttpInsteadOfGit(host: String) {
         listOf("http", "https").forEach { protocol ->
             git.tryConfigUnset(
                 configKey = "url.$protocol://$host/.insteadof",

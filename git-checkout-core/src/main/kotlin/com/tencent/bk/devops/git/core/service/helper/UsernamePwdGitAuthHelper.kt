@@ -44,20 +44,14 @@ import java.net.URI
 class UsernamePwdGitAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
-) : AbGitAuthHelper(git = git, settings = settings) {
+) : HttpGitAuthHelper(git = git, settings = settings) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(UsernamePwdGitAuthHelper::class.java)
         private const val INSTEADOF_URL_CONFIG = "core.insteadOfUrl"
     }
 
-    override fun configureHttp() {
-        if (!serverInfo.httpProtocol ||
-            authInfo.username.isNullOrBlank() ||
-            authInfo.password.isNullOrBlank()
-        ) {
-            return
-        }
+    override fun configureAuth() {
         logger.info("using username and password to set credentials ${authInfo.username}/******")
         EnvHelper.putContext(ContextConstants.CONTEXT_GIT_PROTOCOL, GitProtocolEnum.HTTP.name)
         with(settings) {

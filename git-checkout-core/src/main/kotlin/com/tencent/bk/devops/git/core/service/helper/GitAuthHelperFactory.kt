@@ -33,6 +33,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPE
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
+import com.tencent.bk.devops.git.core.util.GitUtil
 
 object GitAuthHelperFactory {
 
@@ -42,12 +43,22 @@ object GitAuthHelperFactory {
         if (gitAuthHelper != null) {
             return gitAuthHelper!!
         }
+        val serverInfo = GitUtil.getServerInfo(settings.repositoryUrl)
+        gitAuthHelper = if (serverInfo.httpProtocol) {
+            getHttpAuthHelper(git, settings)
+        } else {
+            SshGitAuthHelper(git, settings)
+        }
+        return gitAuthHelper!!
+    }
+
+    private fun getHttpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {
         /**
          * 1. git < 1.7.10没有凭证管理,使用https://username:password@xxx这样的方式授权
          * 2. 如果git版本支持了凭证管理，需要判断用户是否配置了全局凭证并且全局凭证不是git-checkout-credential产生的,
          *    使用ask pass方式获取用户名密码,不然如果用户在拉代码后使用git config --global credential.helper 会报错
          */
-        gitAuthHelper = if (git.isAtLeastVersion(GitConstants.SUPPORT_CRED_HELPER_GIT_VERSION)) {
+        return if (git.isAtLeastVersion(GitConstants.SUPPORT_CRED_HELPER_GIT_VERSION)) {
             val credentialHelperConfig = git.tryConfigGetAll(
                 configKey = GitConstants.GIT_CREDENTIAL_HELPER
             )
@@ -61,7 +72,6 @@ object GitAuthHelperFactory {
         } else {
             UsernamePwdGitAuthHelper(git, settings)
         }
-        return gitAuthHelper!!
     }
 
     fun getCleanUpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {

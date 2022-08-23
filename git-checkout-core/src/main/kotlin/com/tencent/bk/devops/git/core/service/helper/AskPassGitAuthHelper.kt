@@ -49,7 +49,7 @@ import java.io.File
 class AskPassGitAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
-) : AbGitAuthHelper(git = git, settings = settings) {
+) : HttpGitAuthHelper(git = git, settings = settings) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(AskPassGitAuthHelper::class.java)
@@ -57,13 +57,7 @@ class AskPassGitAuthHelper(
 
     private var askpass: File? = null
 
-    override fun configureHttp() {
-        if (!serverInfo.httpProtocol ||
-            authInfo.username.isNullOrBlank() ||
-            authInfo.password.isNullOrBlank()
-        ) {
-            return
-        }
+    override fun configureAuth() {
         logger.info("using core.askpass to set credentials ${authInfo.username}/******")
         EnvHelper.putContext(ContextConstants.CONTEXT_GIT_PROTOCOL, GitProtocolEnum.HTTP.name)
         askpass = if (AgentEnv.getOS() == OSType.WINDOWS) {
