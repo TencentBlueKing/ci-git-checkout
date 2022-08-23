@@ -82,6 +82,8 @@ object GitAuthHelperFactory {
                 AskPassGitAuthHelper(git, settings)
             AuthHelperType.USERNAME_PASSWORD.name ->
                 UsernamePwdGitAuthHelper(git, settings)
+            AuthHelperType.SSH.name ->
+                SshGitAuthHelper(git, settings)
             else -> getAuthHelper(git, settings)
         }
     }
