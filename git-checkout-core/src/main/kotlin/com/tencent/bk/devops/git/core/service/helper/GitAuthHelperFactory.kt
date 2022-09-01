@@ -30,6 +30,7 @@ package com.tencent.bk.devops.git.core.service.helper
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_AUTH_HELPER
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
+import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
@@ -59,12 +60,7 @@ object GitAuthHelperFactory {
          *    使用ask pass方式获取用户名密码,不然如果用户在拉代码后使用git config --global credential.helper 会报错
          */
         return if (git.isAtLeastVersion(GitConstants.SUPPORT_CRED_HELPER_GIT_VERSION)) {
-            val credentialHelperConfig = git.tryConfigGetAll(
-                configKey = GitConstants.GIT_CREDENTIAL_HELPER
-            )
-            if (credentialHelperConfig.isEmpty() ||
-                credentialHelperConfig.any { it.contains(GIT_CREDENTIAL_HELPER_VALUE_REGEX) }
-            ) {
+            if (isUseCustomCredential(git)) {
                 CredentialAuthHelper(git, settings)
             } else {
                 AskPassGitAuthHelper(git, settings)
@@ -72,6 +68,18 @@ object GitAuthHelperFactory {
         } else {
             UsernamePwdGitAuthHelper(git, settings)
         }
+    }
+
+    private fun isUseCustomCredential(git: GitCommandManager): Boolean {
+        val credentialHelperConfig = git.tryConfigGetAll(
+            configKey = GitConstants.GIT_CREDENTIAL_HELPER
+        )
+        return (
+            credentialHelperConfig.isEmpty() ||
+                credentialHelperConfig.any { it.contains(GIT_CREDENTIAL_HELPER_VALUE_REGEX) }
+            ) &&
+            // 当第三方构建机重启后,如果不重启agent,会导致找不到HOME,使用自定义凭证会出现$HOME not set
+            System.getenv(HOME) != null
     }
 
     fun getCleanUpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {

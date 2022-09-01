@@ -29,17 +29,31 @@ package com.tencent.bk.devops.git.core.service.helper
 
 interface IGitAuthHelper {
 
+    /**
+     * 配置当前仓库凭证
+     */
     fun configureAuth()
 
+    /**
+     * 移除当前仓库凭证
+     */
     fun removeAuth()
 
     /**
+     * 配置全局凭证，用于拉取子模块时使用
+     *
      * @param copyGlobalConfig 是否复制全局变量
      */
     fun configGlobalAuth(copyGlobalConfig: Boolean = true)
 
+    /**
+     * 移除全局凭证
+     */
     fun removeGlobalAuth()
 
+    /**
+     * 配置子模块凭证，用户拉取完子模块后，再配置子模块的凭证
+     */
     fun configureSubmoduleAuth()
 
     fun removeSubmoduleAuth()

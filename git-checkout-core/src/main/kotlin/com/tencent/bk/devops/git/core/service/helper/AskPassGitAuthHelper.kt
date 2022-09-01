@@ -29,7 +29,6 @@ package com.tencent.bk.devops.git.core.service.helper
 
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
-import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
@@ -69,10 +68,8 @@ class AskPassGitAuthHelper(
         git.config(configKey = GitConstants.CORE_ASKPASS, configValue = askpass!!.absolutePath)
         git.config(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER, configValue = AuthHelperType.ASK_PASS.name)
         EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.ASK_PASS.name)
+        eraseOauth2Credential()
         storeCredential()
-        if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            git.tryDisableOtherGitHelpers()
-        }
     }
 
     /**
@@ -120,8 +117,11 @@ class AskPassGitAuthHelper(
 
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         super.configGlobalAuth(true)
-        // 临时卸载全局凭证,保证插件的core.askpass一定会生效
-        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER, configScope = GitConfigScope.GLOBAL)
+        git.config(
+            configKey = GitConstants.CORE_ASKPASS,
+            configValue = askpass!!.absolutePath,
+            configScope = GitConfigScope.GLOBAL
+        )
     }
 
     override fun configureSubmoduleAuth() {
@@ -129,9 +129,6 @@ class AskPassGitAuthHelper(
         val commands = mutableListOf<String>()
         if (askpass != null) {
             commands.add("git config core.askpass '${askpass!!.absolutePath}'")
-        }
-        if (git.isAtLeastVersion(SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            commands.add("git config credential.helper '' ")
         }
         if (commands.isNotEmpty()) {
             git.submoduleForeach(commands.joinToString(";"), settings.nestedSubmodules)
@@ -141,7 +138,7 @@ class AskPassGitAuthHelper(
     override fun removeSubmoduleAuth() {
         super.removeSubmoduleAuth()
         git.submoduleForeach(
-            "git config --unset core.askpass; git config --unset credential.helper || true",
+            "git config --unset core.askpass || true",
             settings.nestedSubmodules
         )
     }
