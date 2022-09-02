@@ -83,6 +83,7 @@ class AskPassGitAuthHelper(
     private fun storeCredential() {
         if (settings.persistCredentials && !AgentEnv.isThirdParty()) {
             logger.info("store and overriding global credential for other plugins")
+            println("##[command]$ git credential approve")
             val credentialHosts = getHostList()
             // 同一服务多个域名时，需要保存不同域名的凭证
             credentialHosts.forEach { cHost ->

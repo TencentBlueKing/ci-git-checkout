@@ -93,7 +93,8 @@ abstract class HttpGitAuthHelper(
     // 导致凭证不会自动清理,所以如果是oauth2授权，先移除全局oauth2的凭证
     fun eraseOauth2Credential() {
         if (authInfo.username == OAUTH2) {
-            logger.info("removing `oauth2` username credential")
+            logger.info("removing global credential for `oauth2` username")
+            println("##[command]$ git credential erase")
             // 同一服务多个域名时，需要保存不同域名的凭证
             getHostList().forEach { cHost ->
                 listOf("https", "http").forEach { cProtocol ->
