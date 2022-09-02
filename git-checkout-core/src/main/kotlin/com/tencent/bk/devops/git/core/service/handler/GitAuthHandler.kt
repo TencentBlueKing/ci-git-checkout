@@ -42,7 +42,8 @@ class GitAuthHandler(
     companion object {
         private val logger = LoggerFactory.getLogger(GitAuthHandler::class.java)
     }
-    private val authHelper = GitAuthHelperFactory.getAuthHelper(settings = settings, git = git)
+
+    private val authHelper = lazy { GitAuthHelperFactory.getAuthHelper(settings = settings, git = git) }.value
 
     override fun doHandle() {
         val startEpoch = System.currentTimeMillis()
