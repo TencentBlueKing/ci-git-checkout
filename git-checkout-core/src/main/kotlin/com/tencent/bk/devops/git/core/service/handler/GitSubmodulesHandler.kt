@@ -43,7 +43,7 @@ class GitSubmodulesHandler(
     companion object {
         private val logger = LoggerFactory.getLogger(GitSubmodulesHandler::class.java)
     }
-    private val authHelper = lazy { GitAuthHelperFactory.getAuthHelper(settings = settings, git = git) }.value
+    private val authHelper by lazy { GitAuthHelperFactory.getAuthHelper(settings = settings, git = git) }
 
     override fun doHandle() {
         val startEpoch = System.currentTimeMillis()
