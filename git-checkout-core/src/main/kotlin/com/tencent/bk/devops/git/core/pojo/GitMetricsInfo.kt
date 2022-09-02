@@ -30,5 +30,7 @@ data class GitMetricsInfo(
     val errorInfo: String,
     val transferRate: Double,
     val totalSize: Double,
-    val authHelper: String
+    val authHelper: String,
+    val osName: String,
+    val thirdParty: Boolean
 )

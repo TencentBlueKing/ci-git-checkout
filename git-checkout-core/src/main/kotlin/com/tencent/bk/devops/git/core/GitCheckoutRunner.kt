@@ -60,6 +60,7 @@ import com.tencent.bk.devops.git.core.service.GitSourceProvider
 import com.tencent.bk.devops.git.core.service.helper.IGitMetricsHelper
 import com.tencent.bk.devops.git.core.service.helper.IInputAdapter
 import com.tencent.bk.devops.git.core.service.helper.VersionHelper
+import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.DateUtil
 import com.tencent.bk.devops.git.core.util.EnvHelper
 import com.tencent.bk.devops.git.core.util.GitUtil
@@ -157,7 +158,9 @@ class GitCheckoutRunner {
                     transferRate = EnvHelper.getContext(CONTEXT_TRANSFER_RATE)?.toDouble() ?: 0.0,
                     totalSize = EnvHelper.getContext(CONTEXT_TOTAL_SIZE)?.toDouble() ?: 0.0,
                     errorInfo = EnvHelper.getContext(CONTEXT_ERROR_INFO) ?: "",
-                    authHelper = EnvHelper.getContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER) ?: ""
+                    authHelper = EnvHelper.getContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER) ?: "",
+                    osName = AgentEnv.getOS().name,
+                    thirdParty = AgentEnv.isThirdParty()
                 )
             }
             ServiceLoader.load(IGitMetricsHelper::class.java).firstOrNull()
