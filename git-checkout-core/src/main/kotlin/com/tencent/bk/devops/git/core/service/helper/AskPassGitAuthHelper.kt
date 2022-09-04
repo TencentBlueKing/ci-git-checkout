@@ -67,13 +67,20 @@ class AskPassGitAuthHelper(
         git.setEnvironmentVariable(GitConstants.GIT_ASKPASS, askpass!!.absolutePath)
         git.config(configKey = GitConstants.CORE_ASKPASS, configValue = askpass!!.absolutePath)
         git.config(configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER, configValue = AuthHelperType.ASK_PASS.name)
+        /**
+         * 当流水线编排是: 拉仓库1 -> 拉仓库2 -> bash: git push 仓库1,
+         * 拉仓库1和拉仓库2使用不同的oauth凭证,那么执行bash的时候工蜂会报repository not found.
+         * 这是因为在拉仓库2时存储了全局凭证，bash插件git push时读到仓库2的全局凭证，导致仓库1中的ask_pass没有生效,
+         * 所以设置仓库按照路径进行隔离
+         */
+        git.config(configKey = GitConstants.GIT_CREDENTIAL_USEHTTPPATH, configValue = "true")
         EnvHelper.putContext(GitConstants.GIT_CREDENTIAL_AUTH_HELPER, AuthHelperType.ASK_PASS.name)
         eraseOauth2Credential()
         storeCredential()
     }
 
     /**
-     * 配置全局凭证,保证凭证能够向下游插件传递,兼容http和https
+     * 存储全局凭证,保证凭证能够向下游插件传递,兼容http和https
      *
      * 1. 调用全局凭证管理,将用户名密码保存到凭证管理中使凭证能够向下游插件传递,同时覆盖构建机上错误的凭证
      * 2. 保存全局凭证必须在禁用凭证之前,否则调用全局凭证无用
@@ -112,7 +119,7 @@ class AskPassGitAuthHelper(
                 File(askPass).delete()
             }
             git.tryConfigUnset(configKey = GitConstants.CORE_ASKPASS)
-            git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
+            git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_USEHTTPPATH)
         }
     }
 
@@ -131,17 +138,28 @@ class AskPassGitAuthHelper(
         if (askpass != null) {
             commands.add("git config core.askpass '${askpass!!.absolutePath}'")
         }
+        getHostList().forEach { host ->
+            listOf("https", "http").forEach { protocol ->
+                commands.add("git config credential.$protocol://$host/.useHttpPath true")
+            }
+        }
         if (commands.isNotEmpty()) {
-            git.submoduleForeach(commands.joinToString(";"), settings.nestedSubmodules)
+            git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
         }
     }
 
     override fun removeSubmoduleAuth() {
         super.removeSubmoduleAuth()
-        git.submoduleForeach(
-            "git config --unset core.askpass || true",
-            settings.nestedSubmodules
-        )
+        val commands = mutableListOf<String>()
+        commands.add("git config --unset core.askpass")
+        getHostList().forEach { host ->
+            listOf("https", "http").forEach { protocol ->
+                commands.add("git config --unset credential.$protocol://$host/.useHttpPath")
+            }
+        }
+        if (commands.isNotEmpty()) {
+            git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
+        }
     }
 
     private fun createUnixAskpass(): File {
