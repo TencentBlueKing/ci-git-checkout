@@ -63,7 +63,7 @@ object GitAuthHelperFactory {
             if (isUseCustomCredential(git)) {
                 CredentialAuthHelper(git, settings)
             } else {
-                AskPassGitAuthHelper(git, settings)
+                CredentialStoreAuthHelper(git, settings)
             }
         } else {
             UsernamePwdGitAuthHelper(git, settings)
@@ -86,6 +86,8 @@ object GitAuthHelperFactory {
         return when (git.tryConfigGet(configKey = GIT_CREDENTIAL_AUTH_HELPER)) {
             AuthHelperType.CUSTOM_CREDENTIAL.name ->
                 CredentialAuthHelper(git, settings)
+            AuthHelperType.STORE_CREDENTIAL.name ->
+                CredentialStoreAuthHelper(git, settings)
             AuthHelperType.ASK_PASS.name ->
                 AskPassGitAuthHelper(git, settings)
             AuthHelperType.USERNAME_PASSWORD.name ->

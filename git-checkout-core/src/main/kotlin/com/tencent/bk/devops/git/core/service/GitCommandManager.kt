@@ -290,7 +290,7 @@ class GitCommandManager(
         return args
     }
 
-    fun tryDisableOtherGitHelpers(): Boolean {
+    fun tryDisableOtherGitHelpers(configScope: GitConfigScope = GitConfigScope.LOCAL): Boolean {
         // windows执行git config --local credential.helper 不生效,git config --local credential.helper ""才生效
         val helperValue = if (AgentEnv.getOS() == OSType.WINDOWS) {
             "\"\""
@@ -298,7 +298,7 @@ class GitCommandManager(
             ""
         }
         val output = execGit(
-            args = listOf("config", "--local", GIT_CREDENTIAL_HELPER, helperValue),
+            args = listOf("config", configScope.arg, GIT_CREDENTIAL_HELPER, helperValue),
             allowAllExitCodes = true
         )
         return output.exitCode == 0
