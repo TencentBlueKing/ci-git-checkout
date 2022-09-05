@@ -51,14 +51,7 @@ class CredentialStoreAuthHelper(
     companion object {
         private val logger = LoggerFactory.getLogger(CredentialStoreAuthHelper::class.java)
     }
-    private val credentialHome = Paths.get(
-        System.getProperty("user.home"),
-        ".checkout",
-        System.getenv(GitConstants.BK_CI_PIPELINE_ID) ?: "",
-        System.getenv(GitConstants.BK_CI_BUILD_JOB_ID) ?: "",
-        System.getenv(GitConstants.BK_CI_BUILD_TASK_ID) ?: ""
-    ).toString()
-    private val storeFile = File(credentialHome, ".git-credentials")
+    private val storeFile = File.createTempFile("git_", "_credentials")
 
     override fun configureAuth() {
         logger.info("using store credential to set credentials ${authInfo.username}/******")
@@ -114,9 +107,9 @@ class CredentialStoreAuthHelper(
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         super.configGlobalAuth(copyGlobalConfig)
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            combinableHost { _, _ ->
+            combinableHost { protocol, host ->
                 git.config(
-                    configKey = GitConstants.GIT_CREDENTIAL_HELPER,
+                    configKey = "credential.$protocol://$host.helper",
                     configValue = "",
                     configScope = GitConfigScope.GLOBAL
                 )
@@ -138,7 +131,7 @@ class CredentialStoreAuthHelper(
             }
         }
         commands.add("git config credential.helper 'store --file=${storeFile.absolutePath}'")
-        git.submoduleForeach("${commands.joinToString { ";" }} || true", settings.nestedSubmodules)
+        git.submoduleForeach("${commands.joinToString(";") }} || true", settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
@@ -150,18 +143,14 @@ class CredentialStoreAuthHelper(
             }
         }
         commands.add("git config --remove-section credential.helper")
-        git.submoduleForeach("${commands.joinToString { ";" }} || true", settings.nestedSubmodules)
+        git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
 
     private fun writeStoreFile() {
-        val credentialHomeFile = File(credentialHome)
-        if (!credentialHomeFile.exists()) {
-            credentialHomeFile.mkdirs()
-        }
         combinableHost { protocol, host ->
             storeFile.appendText(
                 "$protocol://" +
-                    "${GitUtil.urlEncode(authInfo.username!!)}:${GitUtil.urlEncode(authInfo.password!!)}/$host"
+                    "${GitUtil.urlEncode(authInfo.username!!)}:${GitUtil.urlEncode(authInfo.password!!)}/$host\n"
             )
         }
     }
