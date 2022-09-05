@@ -92,21 +92,22 @@ abstract class HttpGitAuthHelper(
     // 工蜂如果oauth2方式授权，如果token有效但是没有仓库的权限,返回状态码是200，但是会抛出repository not found异常,
     // 导致凭证不会自动清理,所以如果是oauth2授权，先移除全局oauth2的凭证
     fun eraseOauth2Credential() {
-        if (authInfo.username == OAUTH2) {
-            logger.info("removing global credential for `oauth2` username")
-            println("##[command]$ git credential erase")
-            // 同一服务多个域名时，需要保存不同域名的凭证
-            getHostList().forEach { cHost ->
-                listOf("https", "http").forEach { cProtocol ->
-                    git.credential(
-                        action = CredentialActionEnum.ERASE,
-                        inputStream = CredentialArguments(
-                            protocol = cProtocol,
-                            host = cHost,
-                            username = OAUTH2
-                        ).convertInputStream()
-                    )
-                }
+        if (authInfo.username != OAUTH2) {
+            return
+        }
+        logger.info("removing global credential for `oauth2` username")
+        println("##[command]$ git credential erase")
+        // 同一服务多个域名时，需要保存不同域名的凭证
+        getHostList().forEach { cHost ->
+            listOf("https", "http").forEach { cProtocol ->
+                git.credential(
+                    action = CredentialActionEnum.ERASE,
+                    inputStream = CredentialArguments(
+                        protocol = cProtocol,
+                        host = cHost,
+                        username = OAUTH2
+                    ).convertInputStream()
+                )
             }
         }
     }

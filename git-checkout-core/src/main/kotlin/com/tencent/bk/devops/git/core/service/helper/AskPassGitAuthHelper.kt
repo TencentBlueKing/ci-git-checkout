@@ -31,20 +31,23 @@ import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
-import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
 import com.tencent.bk.devops.git.core.enums.OSType
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.util.AgentEnv
+import com.tencent.bk.devops.git.core.util.CommandUtil
 import com.tencent.bk.devops.git.core.util.EnvHelper
+import com.tencent.bk.devops.git.core.util.GitUtil
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.nio.file.Paths
 
 /**
  * 通过GIT_ASKPASS访问git凭证
  */
+@SuppressWarnings("TooManyFunctions")
 class AskPassGitAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
@@ -55,6 +58,13 @@ class AskPassGitAuthHelper(
     }
 
     private var askpass: File? = null
+    private val credentialHome = File(System.getProperty("user.home"), ".checkout").absolutePath
+    private val credentialFilePath = Paths.get(
+        credentialHome,
+        System.getenv(GitConstants.BK_CI_PIPELINE_ID) ?: "",
+        System.getenv(GitConstants.BK_CI_BUILD_JOB_ID) ?: "",
+        ".git-credentials"
+    ).toString()
 
     override fun configureAuth() {
         logger.info("using core.askpass to set credentials ${authInfo.username}/******")
@@ -125,11 +135,19 @@ class AskPassGitAuthHelper(
 
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         super.configGlobalAuth(true)
-        git.config(
-            configKey = GitConstants.CORE_ASKPASS,
-            configValue = askpass!!.absolutePath,
-            configScope = GitConfigScope.GLOBAL
-        )
+        // 设置一个临时的全局凭证拉取子模块,为什么不直接设置core.askPass,为了防止用户名密码被泄露。
+        // 比如在子模块中设置一个恶意的url，如果使用askPass，没有限制url，git执行的时候，就会把用户名密码传递到这个恶意的url上，
+        // 导致用户名密码泄露
+        writeStoreCredentialFile()
+        git.config(configKey = GitConstants.GIT_CREDENTIAL_HELPER, configValue = "store --file=$credentialFilePath")
+    }
+
+    override fun removeGlobalAuth() {
+        super.removeGlobalAuth()
+        val credentialFile = File(credentialFilePath)
+        if (credentialFile.exists()) {
+            credentialFile.delete()
+        }
     }
 
     override fun configureSubmoduleAuth() {
@@ -143,9 +161,7 @@ class AskPassGitAuthHelper(
                 commands.add("git config credential.$protocol://$host/.useHttpPath true")
             }
         }
-        if (commands.isNotEmpty()) {
-            git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
-        }
+        submoduleForeach(commands.joinToString { "\n" })
     }
 
     override fun removeSubmoduleAuth() {
@@ -154,11 +170,25 @@ class AskPassGitAuthHelper(
         commands.add("git config --unset core.askpass")
         getHostList().forEach { host ->
             listOf("https", "http").forEach { protocol ->
-                commands.add("git config --unset credential.$protocol://$host/.useHttpPath")
+                commands.add("git config --remove-section credential.$protocol://$host/.useHttpPath")
             }
         }
-        if (commands.isNotEmpty()) {
-            git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
+        submoduleForeach(commands.joinToString { "\n" })
+    }
+
+    private fun submoduleForeach(command: String) {
+        val hostList = getHostList()
+        GitSubmoduleHelper().getSubmodules(
+            repositoryDir = File(settings.repositoryPath),
+            recursive = settings.nestedSubmodules
+        ).filter { gitSubmodule ->
+            hostList.contains(GitUtil.getServerInfo(gitSubmodule.url).hostName)
+        }.forEach { gitSubmodule ->
+            logger.info("Entering '${gitSubmodule.name}'")
+            CommandUtil.execute(
+                command = command,
+                workingDirectory = File(settings.repositoryPath, gitSubmodule.path)
+            )
         }
     }
 
@@ -184,5 +214,21 @@ class AskPassGitAuthHelper(
         )
         askpass.setExecutable(true, true)
         return askpass
+    }
+
+    private fun writeStoreCredentialFile() {
+        val credentialFile = File(credentialFilePath)
+        if (!credentialFile.exists()) {
+            credentialFile.mkdirs()
+        }
+        getHostList().forEach { host ->
+            listOf("https", "http").forEach { protocol ->
+                credentialFile.appendText(
+                    "$protocol://" +
+                        "${GitUtil.urlEncode(authInfo.username!!)}:${GitUtil.urlEncode(authInfo.password!!)}" +
+                        "/$host"
+                )
+            }
+        }
     }
 }
