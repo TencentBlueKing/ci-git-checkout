@@ -122,7 +122,7 @@ class CredentialStoreAuthHelper(
             }
         }
         commands.add("git config credential.helper 'store --file=${storeFile.absolutePath}'")
-        git.submoduleForeach("${commands.joinToString(";") }} || true", settings.nestedSubmodules)
+        git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
