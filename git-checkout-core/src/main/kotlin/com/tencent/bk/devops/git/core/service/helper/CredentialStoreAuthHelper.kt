@@ -106,16 +106,7 @@ class CredentialStoreAuthHelper(
 
     override fun configGlobalAuth(copyGlobalConfig: Boolean) {
         super.configGlobalAuth(copyGlobalConfig)
-        if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            combinableHost { protocol, host ->
-                git.config(
-                    configKey = "credential.$protocol://$host.helper",
-                    configValue = "\"\"",
-                    configScope = GitConfigScope.GLOBAL
-                )
-            }
-        }
-        git.config(
+        git.configAdd(
             configKey = GitConstants.GIT_CREDENTIAL_HELPER,
             configValue = "store --file=${storeFile.absolutePath}",
             configScope = GitConfigScope.GLOBAL
@@ -150,7 +141,7 @@ class CredentialStoreAuthHelper(
         combinableHost { protocol, host ->
             storeFile.appendText(
                 "$protocol://" +
-                    "${GitUtil.urlEncode(authInfo.username!!)}:${GitUtil.urlEncode(authInfo.password!!)}/$host\n"
+                    "${GitUtil.urlEncode(authInfo.username!!)}:${GitUtil.urlEncode(authInfo.password!!)}@$host\n"
             )
         }
     }
