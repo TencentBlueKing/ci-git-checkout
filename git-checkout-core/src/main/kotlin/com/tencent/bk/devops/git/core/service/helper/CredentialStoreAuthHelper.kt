@@ -110,7 +110,7 @@ class CredentialStoreAuthHelper(
             combinableHost { protocol, host ->
                 git.config(
                     configKey = "credential.$protocol://$host.helper",
-                    configValue = "",
+                    configValue = "\"\"",
                     configScope = GitConfigScope.GLOBAL
                 )
             }
