@@ -41,6 +41,7 @@ import com.tencent.devops.git.log.GitLogOutputStream
 import com.tencent.devops.git.log.LogType
 import org.apache.commons.exec.CommandLine
 import org.apache.commons.exec.ExecuteException
+import org.apache.commons.exec.LogOutputStream
 import org.apache.commons.exec.PumpStreamHandler
 import org.apache.commons.exec.environment.EnvironmentUtils
 import org.apache.commons.io.IOUtils
@@ -163,6 +164,50 @@ object CommandUtil {
         } finally {
             reportGitPackingPhase(gitPackingPhase)
             IOUtils.close(errorStream, outputStream, inputStream)
+        }
+    }
+
+    fun execute(
+        command: String,
+        workingDirectory: File?,
+        printLogger: Boolean = false,
+        allowAllExitCodes: Boolean = false
+    ) {
+
+        val cmdLine = CommandLine.parse(command)
+        if (printLogger) {
+            println("##[command]$ ${SensitiveLineParser.onParseLine(cmdLine.toStrings().joinToString(" "))}")
+        }
+        val executor = CommandLineExecutor()
+        if (workingDirectory != null) {
+            executor.workingDirectory = workingDirectory
+        }
+
+        val outputStream = object : LogOutputStream() {
+            override fun processLine(line: String?, level: Int) {
+                if (line == null)
+                    return
+
+                val tmpLine = SensitiveLineParser.onParseLine(line)
+                if (printLogger) {
+                    println("  $tmpLine")
+                }
+            }
+        }
+        executor.streamHandler = PumpStreamHandler(outputStream, outputStream)
+        if (allowAllExitCodes) {
+            executor.setExitValues(null)
+        }
+        try {
+            executor.execute(cmdLine)
+        } catch (ignore: Throwable) {
+            throw GitExecuteException(
+                errorType = ErrorType.PLUGIN,
+                errorCode = GitConstants.DEFAULT_ERROR,
+                errorMsg = ignore.message ?: ""
+            )
+        } finally {
+            IOUtils.close(outputStream, outputStream)
         }
     }
 
