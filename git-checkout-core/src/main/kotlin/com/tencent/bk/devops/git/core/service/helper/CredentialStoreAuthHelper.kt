@@ -124,7 +124,7 @@ class CredentialStoreAuthHelper(
                 commands.add("git config credential.$protocol://$host/.helper '' ")
             }
         }
-        commands.add("git config --unset credential.helper 'store --file=${storeFile.absolutePath}'")
+        commands.add("git config --unset credential.helper")
         commands.add("git config credential.helper 'store --file=${storeFile.absolutePath}'")
         git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
