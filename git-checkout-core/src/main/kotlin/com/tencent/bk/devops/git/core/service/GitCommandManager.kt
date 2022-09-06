@@ -290,7 +290,8 @@ class GitCommandManager(
     fun tryDisableOtherGitHelpers(configScope: GitConfigScope = GitConfigScope.LOCAL) {
         CommandUtil.execute(
             command = "git config ${configScope.arg} credential.helper ''",
-            workingDirectory = workingDirectory
+            workingDirectory = workingDirectory,
+            printLogger = true
         )
     }
 
