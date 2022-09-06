@@ -130,9 +130,13 @@ class CredentialStoreAuthHelper(
         val commands = mutableListOf<String>()
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             combinableHost { protocol, host ->
+                commands.add("git config --unset credential.$protocol://$host/.helper '' ")
+            }
+            combinableHost { protocol, host ->
                 commands.add("git config --remove-section credential.$protocol://$host/.helper '' ")
             }
         }
+        commands.add("git config --unset credential.helper")
         commands.add("git config --remove-section credential.helper")
         git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
