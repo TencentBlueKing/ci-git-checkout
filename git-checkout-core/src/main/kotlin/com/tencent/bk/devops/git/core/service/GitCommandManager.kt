@@ -29,7 +29,6 @@ package com.tencent.bk.devops.git.core.service
 
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.GCM_INTERACTIVE
-import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_LFS_FORCE_PROGRESS
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_LFS_SKIP_SMUDGE
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_TERMINAL_PROMPT
@@ -41,14 +40,12 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.SUPPORT_SUBMODULE_SY
 import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
 import com.tencent.bk.devops.git.core.enums.FilterValueEnum
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
-import com.tencent.bk.devops.git.core.enums.OSType
 import com.tencent.bk.devops.git.core.exception.GitExecuteException
 import com.tencent.bk.devops.git.core.exception.RetryException
 import com.tencent.bk.devops.git.core.pojo.CommitLogInfo
 import com.tencent.bk.devops.git.core.pojo.GitOutput
 import com.tencent.bk.devops.git.core.service.helper.RetryHelper
 import com.tencent.bk.devops.git.core.service.helper.VersionHelper
-import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.CommandUtil
 import com.tencent.bk.devops.git.core.util.RegexUtil
 import com.tencent.devops.git.log.LogType
@@ -290,18 +287,11 @@ class GitCommandManager(
         return args
     }
 
-    fun tryDisableOtherGitHelpers(configScope: GitConfigScope = GitConfigScope.LOCAL): Boolean {
-        // windows执行git config --local credential.helper 不生效,git config --local credential.helper ""才生效
-        val helperValue = if (AgentEnv.getOS() == OSType.WINDOWS) {
-            "\"\""
-        } else {
-            ""
-        }
-        val output = execGit(
-            args = listOf("config", configScope.arg, GIT_CREDENTIAL_HELPER, helperValue),
-            allowAllExitCodes = true
+    fun tryDisableOtherGitHelpers(configScope: GitConfigScope = GitConfigScope.LOCAL) {
+        CommandUtil.execute(
+            command = "git config ${configScope.arg} credential.helper ''",
+            workingDirectory = workingDirectory
         )
-        return output.exitCode == 0
     }
 
     fun setEnvironmentVariable(name: String, value: String) {
