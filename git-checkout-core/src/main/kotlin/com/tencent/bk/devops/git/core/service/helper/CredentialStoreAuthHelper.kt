@@ -63,10 +63,11 @@ class CredentialStoreAuthHelper(
         eraseOauth2Credential()
         storeGlobalCredential()
         writeStoreFile()
+        git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             git.tryDisableOtherGitHelpers(configScope = GitConfigScope.LOCAL)
         }
-        git.config(
+        git.configAdd(
             configKey = GitConstants.GIT_CREDENTIAL_HELPER,
             configValue = "store --file=${storeFile.absolutePath}"
         )
@@ -118,9 +119,12 @@ class CredentialStoreAuthHelper(
         val commands = mutableListOf<String>()
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             combinableHost { protocol, host ->
+                // 先卸载上一次执行可能没有清理的凭证
+                commands.add("git config --unset credential.$protocol://$host/.helper")
                 commands.add("git config credential.$protocol://$host/.helper '' ")
             }
         }
+        commands.add("git config --unset credential.helper 'store --file=${storeFile.absolutePath}'")
         commands.add("git config credential.helper 'store --file=${storeFile.absolutePath}'")
         git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
