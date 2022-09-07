@@ -57,6 +57,8 @@ import java.nio.file.Paths
 
 /**
  * 使用自定义git-checkout-credential凭证
+ *
+ * 用于第三方构建机或公共构建机没有配置全局凭证的
  */
 @Suppress("ALL")
 class CredentialCheckoutAuthHelper(

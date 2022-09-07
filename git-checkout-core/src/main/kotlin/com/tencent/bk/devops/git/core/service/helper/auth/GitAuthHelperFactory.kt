@@ -32,9 +32,11 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_AUTH_
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
 import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
+import com.tencent.bk.devops.git.core.enums.GitConfigScope
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.service.helper.IGitAuthHelper
+import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.GitUtil
 
 object GitAuthHelperFactory {
@@ -71,16 +73,22 @@ object GitAuthHelperFactory {
         }
     }
 
+    /**
+     * 满足使用自定义凭证的条件
+     * 1. 第三方构建机
+     * 2. 公共构建机没有配置全局凭证，或者全局凭证已经包含了自定义凭证
+     */
     private fun isUseCustomCredential(git: GitCommandManager): Boolean {
+        if (System.getenv(HOME) == null) {
+            return false
+        }
         val credentialHelperConfig = git.tryConfigGetAll(
-            configKey = GitConstants.GIT_CREDENTIAL_HELPER
+            configKey = GitConstants.GIT_CREDENTIAL_HELPER,
+            configScope = GitConfigScope.GLOBAL
         )
-        return (
+        return AgentEnv.isThirdParty() ||
             credentialHelperConfig.isEmpty() ||
-                credentialHelperConfig.any { it.contains(GIT_CREDENTIAL_HELPER_VALUE_REGEX) }
-            ) &&
-            // 当第三方构建机重启后,如果不重启agent,会导致找不到HOME,使用自定义凭证会出现$HOME not set
-            System.getenv(HOME) != null
+            credentialHelperConfig.any { it.contains(GIT_CREDENTIAL_HELPER_VALUE_REGEX) }
     }
 
     fun getCleanUpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {

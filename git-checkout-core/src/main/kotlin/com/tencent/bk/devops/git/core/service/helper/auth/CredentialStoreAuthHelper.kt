@@ -43,6 +43,11 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 
+/**
+ * 使用store凭证使凭证传递
+ *
+ * 用于公共构建机并且配置了全局凭证
+ */
 class CredentialStoreAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings

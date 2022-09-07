@@ -47,7 +47,7 @@ abstract class CredentialAuthHelper(
             }
         }
         commands.add("git config --unset credential.helper")
-
+        addSubmoduleCommand(commands)
         git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
 
