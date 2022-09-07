@@ -399,8 +399,6 @@ class GitCommandManager(
                 }
             }
         }
-        // 重试成功移除调试信息
-        gitEnv.remove(GIT_TRACE)
     }
 
     fun lfsInstall() {

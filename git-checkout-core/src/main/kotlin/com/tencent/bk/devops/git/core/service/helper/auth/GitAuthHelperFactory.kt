@@ -38,10 +38,13 @@ import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.service.helper.IGitAuthHelper
 import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.GitUtil
+import org.slf4j.LoggerFactory
 
 object GitAuthHelperFactory {
 
     private var gitAuthHelper: IGitAuthHelper? = null
+
+    private val logger = LoggerFactory.getLogger(GitAuthHelperFactory::class.java)
 
     fun getAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {
         if (gitAuthHelper != null) {
@@ -80,6 +83,7 @@ object GitAuthHelperFactory {
      */
     private fun isUseCustomCredential(git: GitCommandManager): Boolean {
         if (System.getenv(HOME) == null) {
+            logger.error("$HOME not set")
             return false
         }
         val credentialHelperConfig = git.tryConfigGetAll(

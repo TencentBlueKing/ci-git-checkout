@@ -30,13 +30,11 @@ package com.tencent.bk.devops.git.core.service.helper.auth
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.BK_CI_BUILD_JOB_ID
-import com.tencent.bk.devops.git.core.constant.GitConstants.BK_CI_BUILD_TASK_ID
 import com.tencent.bk.devops.git.core.constant.GitConstants.CREDENTIAL_JAR_PATH
 import com.tencent.bk.devops.git.core.constant.GitConstants.CREDENTIAL_JAVA_PATH
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_COMPATIBLEHOST
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPER_VALUE_REGEX
-import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_TASKID
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_REPO_PATH
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
@@ -84,11 +82,10 @@ class CredentialCheckoutAuthHelper(
     override fun configureAuth() {
         logger.info("using custom credential helper to set credentials ${authInfo.username}/******")
         EnvHelper.putContext(ContextConstants.CONTEXT_GIT_PROTOCOL, GitProtocolEnum.HTTP.name)
-        val compatibleHostList = settings.compatibleHostList
-        if (!compatibleHostList.isNullOrEmpty() && compatibleHostList.contains(serverInfo.hostName)) {
+        if (!git.configExists(configKey = GIT_CREDENTIAL_COMPATIBLEHOST)) {
             git.config(
                 configKey = GIT_CREDENTIAL_COMPATIBLEHOST,
-                configValue = compatibleHostList.joinToString(","),
+                configValue = getHostList().joinToString(","),
                 configScope = GitConfigScope.GLOBAL
             )
         }
@@ -107,10 +104,9 @@ class CredentialCheckoutAuthHelper(
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             git.tryDisableOtherGitHelpers(configScope = GitConfigScope.LOCAL)
         }
-        git.config(configKey = GIT_CREDENTIAL_TASKID, configValue = settings.pipelineTaskId)
         git.configAdd(
             configKey = GIT_CREDENTIAL_HELPER,
-            configValue = "!bash '$credentialShellPath'"
+            configValue = "!bash '$credentialShellPath' ${settings.pipelineTaskId}"
         )
         install()
         store()
@@ -154,6 +150,7 @@ class CredentialCheckoutAuthHelper(
                     "-Ddebug=${settings.enableTrace}",
                     "-jar",
                     credentialJarPath,
+                    settings.pipelineTaskId,
                     "devopsStore"
                 ),
                 runtimeEnv = mapOf(
@@ -237,7 +234,6 @@ class CredentialCheckoutAuthHelper(
             return
         }
         // 清理构建机上凭证
-        val taskId = git.tryConfigGet(configKey = GIT_CREDENTIAL_TASKID)
         if (File(credentialJarPath).exists()) {
             with(URL(settings.repositoryUrl).toURI()) {
                 CommandUtil.execute(
@@ -247,11 +243,11 @@ class CredentialCheckoutAuthHelper(
                         "-Ddebug=${settings.enableTrace}",
                         "-jar",
                         credentialJarPath,
+                        settings.pipelineTaskId,
                         "devopsErase"
                     ),
                     runtimeEnv = mapOf(
-                        GIT_REPO_PATH to settings.repositoryPath,
-                        BK_CI_BUILD_TASK_ID to taskId
+                        GIT_REPO_PATH to settings.repositoryPath
                     ),
                     inputStream = CredentialArguments(
                         protocol = scheme,
@@ -261,11 +257,10 @@ class CredentialCheckoutAuthHelper(
                 )
             }
         }
-        git.tryConfigUnset(configKey = GIT_CREDENTIAL_TASKID)
+        git.tryConfigUnset(configKey = GIT_CREDENTIAL_HELPER)
     }
 
     override fun addSubmoduleCommand(commands: MutableList<String>) {
-        commands.add("git config credential.helper !bash '$credentialShellPath'")
-        commands.add("git config credential.taskId ${settings.pipelineTaskId}")
+        commands.add("git config credential.helper '!bash $credentialShellPath ${settings.pipelineTaskId}'")
     }
 }

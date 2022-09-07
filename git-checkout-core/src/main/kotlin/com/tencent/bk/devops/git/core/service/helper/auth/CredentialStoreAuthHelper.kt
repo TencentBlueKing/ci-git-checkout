@@ -74,7 +74,7 @@ class CredentialStoreAuthHelper(
         }
         git.configAdd(
             configKey = GitConstants.GIT_CREDENTIAL_HELPER,
-            configValue = "store --file=${storeFile.absolutePath}"
+            configValue = "store --file='${storeFile.absolutePath}'"
         )
     }
 

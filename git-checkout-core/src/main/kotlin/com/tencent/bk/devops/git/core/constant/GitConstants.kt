@@ -43,7 +43,6 @@ object GitConstants {
     const val BK_CI_BUILD_ID = "BK_CI_BUILD_ID"
     const val BK_CI_BUILD_JOB_ID = "BK_CI_BUILD_JOB_ID"
     const val BK_CI_PIPELINE_ID = "BK_CI_PIPELINE_ID"
-    const val BK_CI_BUILD_TASK_ID = "BK_CI_BUILD_TASK_ID"
     const val BK_CI_ATOM_CODE = "BK_CI_ATOM_CODE"
     const val BK_CI_HOOK_BRANCH = "BK_CI_HOOK_BRANCH"
     const val BK_CI_REPO_WEBHOOK_REPO_URL = "BK_CI_REPO_WEBHOOK_REPO_URL"
