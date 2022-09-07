@@ -104,6 +104,7 @@ class CredentialCheckoutAuthHelper(
         if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
             git.tryDisableOtherGitHelpers(configScope = GitConfigScope.LOCAL)
         }
+        git.config(configKey = GitConstants.GIT_CREDENTIAL_TASKID, configValue = settings.pipelineTaskId)
         git.configAdd(
             configKey = GIT_CREDENTIAL_HELPER,
             configValue = "!bash '$credentialShellPath' ${settings.pipelineTaskId}"
@@ -233,6 +234,7 @@ class CredentialCheckoutAuthHelper(
         if (!serverInfo.httpProtocol) {
             return
         }
+        val taskId = git.tryConfigGet(configKey = GitConstants.GIT_CREDENTIAL_TASKID)
         // 清理构建机上凭证
         if (File(credentialJarPath).exists()) {
             with(URL(settings.repositoryUrl).toURI()) {
@@ -243,7 +245,7 @@ class CredentialCheckoutAuthHelper(
                         "-Ddebug=${settings.enableTrace}",
                         "-jar",
                         credentialJarPath,
-                        settings.pipelineTaskId,
+                        taskId,
                         "devopsErase"
                     ),
                     runtimeEnv = mapOf(
