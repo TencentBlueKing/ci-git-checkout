@@ -33,6 +33,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_HELPE
 import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
+import com.tencent.bk.devops.git.core.enums.OSType
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.service.helper.IGitAuthHelper
@@ -82,7 +83,8 @@ object GitAuthHelperFactory {
      * 2. 公共构建机没有配置全局凭证，或者全局凭证已经包含了自定义凭证
      */
     private fun isUseCustomCredential(git: GitCommandManager): Boolean {
-        if (System.getenv(HOME) == null) {
+        // linux或mac构建机重启后,自启动agent可能导致HOME不存在
+        if (AgentEnv.getOS() != OSType.WINDOWS && System.getenv(HOME) == null) {
             logger.error("$HOME not set")
             return false
         }

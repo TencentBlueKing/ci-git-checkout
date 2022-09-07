@@ -106,6 +106,7 @@ class CredentialStoreAuthHelper(
     override fun removeAuth() {
         val storeCredentialValue = git.tryConfigGet(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
         val credentialFilePath = storeCredentialValue.substringAfter("--file=")
+            .removePrefix("'").removeSuffix("'")
         Files.deleteIfExists(Paths.get(credentialFilePath))
         git.tryConfigUnset(configKey = GitConstants.GIT_CREDENTIAL_HELPER)
     }
