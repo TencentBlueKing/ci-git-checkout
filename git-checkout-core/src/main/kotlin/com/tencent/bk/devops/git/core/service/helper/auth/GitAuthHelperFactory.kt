@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.helper
+package com.tencent.bk.devops.git.core.service.helper.auth
 
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants.GIT_CREDENTIAL_AUTH_HELPER
@@ -34,6 +34,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants.HOME
 import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
+import com.tencent.bk.devops.git.core.service.helper.IGitAuthHelper
 import com.tencent.bk.devops.git.core.util.GitUtil
 
 object GitAuthHelperFactory {
@@ -61,7 +62,7 @@ object GitAuthHelperFactory {
          */
         return if (git.isAtLeastVersion(GitConstants.SUPPORT_CRED_HELPER_GIT_VERSION)) {
             if (isUseCustomCredential(git)) {
-                CredentialAuthHelper(git, settings)
+                CredentialCheckoutAuthHelper(git, settings)
             } else {
                 CredentialStoreAuthHelper(git, settings)
             }
@@ -85,7 +86,7 @@ object GitAuthHelperFactory {
     fun getCleanUpAuthHelper(git: GitCommandManager, settings: GitSourceSettings): IGitAuthHelper {
         return when (git.tryConfigGet(configKey = GIT_CREDENTIAL_AUTH_HELPER)) {
             AuthHelperType.CUSTOM_CREDENTIAL.name ->
-                CredentialAuthHelper(git, settings)
+                CredentialCheckoutAuthHelper(git, settings)
             AuthHelperType.STORE_CREDENTIAL.name ->
                 CredentialStoreAuthHelper(git, settings)
             AuthHelperType.ASK_PASS.name ->

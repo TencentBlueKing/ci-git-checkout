@@ -67,6 +67,7 @@ object GitConstants {
     const val GIT_LFS_FORCE_PROGRESS = "GIT_LFS_FORCE_PROGRESS"
     const val GIT_HTTP_USER_AGENT = "GIT_HTTP_USER_AGENT"
     const val GIT_CREDENTIAL_HELPER = "credential.helper"
+    const val GIT_CREDENTIAL_TASKID = "credential.taskId"
     const val GIT_CREDENTIAL_HELPER_VALUE_REGEX = "git-checkout.sh"
     const val GIT_CHECKOUT_CREDENTIAL_VALUE_REGEX = "git-checkout-credential.sh"
     const val GIT_TRACE = "GIT_TRACE"

@@ -25,57 +25,73 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.helper
+package com.tencent.bk.devops.git.core.service.helper.auth
 
-import com.tencent.bk.devops.git.core.enums.CredentialActionEnum
+import com.tencent.bk.devops.git.core.constant.ContextConstants
+import com.tencent.bk.devops.git.core.constant.GitConstants
+import com.tencent.bk.devops.git.core.enums.AuthHelperType
 import com.tencent.bk.devops.git.core.enums.GitConfigScope
-import com.tencent.bk.devops.git.core.pojo.CredentialArguments
+import com.tencent.bk.devops.git.core.enums.GitProtocolEnum
+import com.tencent.bk.devops.git.core.exception.ParamInvalidException
 import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
-import org.slf4j.LoggerFactory
+import com.tencent.bk.devops.git.core.util.EnvHelper
+import com.tencent.bk.devops.git.core.util.SSHAgentUtils
 
-abstract class HttpGitAuthHelper(
+class SshGitAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
 ) : AbGitAuthHelper(git = git, settings = settings) {
 
-    companion object {
-        private const val OAUTH2 = "oauth2"
-        private val logger = LoggerFactory.getLogger(HttpGitAuthHelper::class.java)
+    override fun configureAuth() {
+        if (authInfo.privateKey.isNullOrBlank()) {
+            throw ParamInvalidException(errorMsg = "private key must not be empty")
+        }
+        EnvHelper.putContext(ContextConstants.CONTEXT_GIT_PROTOCOL, GitProtocolEnum.SSH.name)
+        SSHAgentUtils(privateKey = authInfo.privateKey, passPhrase = authInfo.passPhrase).addIdentity()
+        git.setEnvironmentVariable(GitConstants.GIT_SSH_COMMAND, GitConstants.GIT_SSH_COMMAND_VALUE)
+        git.config(
+            configKey = GitConstants.GIT_CREDENTIAL_AUTH_HELPER,
+            configValue = AuthHelperType.SSH.name
+        )
     }
+
+    override fun removeAuth() = Unit
 
     override fun configureSubmoduleAuth() {
         val insteadOfHosts = getHostList()
-        val commands = mutableListOf<String>()
         // 卸载上一步可能没有清理干净的insteadOf
         // windows 执行一条git submodule foreach都需要很久时间,将insteadOf组装在一起节省执行时间
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
+        val commands = mutableListOf<String>()
+        val insteadOfKey = "url.git@${serverInfo.hostName}:.insteadof"
         commands.add("git config --unset-all $insteadOfKey")
         insteadOfHosts.forEach { host ->
-            commands.add("git config --add $insteadOfKey git@$host: ")
+            listOf("http", "https").forEach { protocol ->
+                commands.add(" git config --add $insteadOfKey $protocol://$host/ ")
+            }
         }
         git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
 
     override fun removeSubmoduleAuth() {
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
+        val insteadOfKey = "url.git@${serverInfo.hostName}:.insteadof"
         // git低版本卸载insteadOf后,但是url.*并没有卸载,需要指定再卸载
         git.submoduleForeach(
             " git config --unset-all $insteadOfKey; " +
-                "git config --remove-section url.${serverInfo.origin}/ || true",
+                "git config --remove-section url.git@${serverInfo.hostName}: || true",
             settings.nestedSubmodules
         )
     }
 
     override fun insteadOf() {
         val insteadOfHosts = getHostList()
-        val insteadOfKey = "url.${serverInfo.origin}/.insteadOf"
+        val insteadOfKey = "url.git@${serverInfo.hostName}:.insteadof"
         git.tryConfigUnset(
             configKey = insteadOfKey,
             configScope = GitConfigScope.GLOBAL
         )
         insteadOfHosts.forEach { host ->
-            httpInsteadOfGit(
+            gitInsteadOfHttp(
                 host = host,
                 insteadOfKey = insteadOfKey
             )
@@ -85,39 +101,7 @@ abstract class HttpGitAuthHelper(
     override fun unsetInsteadOf() {
         val insteadOfHosts = getHostList()
         insteadOfHosts.forEach { host ->
-            unsetGitInsteadOfHttp(host = host)
-        }
-    }
-
-    // 工蜂如果oauth2方式授权，如果token有效但是没有仓库的权限,返回状态码是200，但是会抛出repository not found异常,
-    // 导致凭证不会自动清理,所以如果是oauth2授权，先移除全局oauth2的凭证
-    fun eraseOauth2Credential() {
-        if (authInfo.username != OAUTH2) {
-            return
-        }
-        logger.info("removing global credential for `oauth2` username")
-        println("##[command]$ git credential erase")
-        // 同一服务多个域名时，需要保存不同域名的凭证
-        getHostList().forEach { cHost ->
-            listOf("https", "http").forEach { cProtocol ->
-                git.credential(
-                    action = CredentialActionEnum.ERASE,
-                    inputStream = CredentialArguments(
-                        protocol = cProtocol,
-                        host = cHost,
-                        username = OAUTH2
-                    ).convertInputStream()
-                )
-            }
-        }
-    }
-
-    fun combinableHost(action: (protocol: String, host: String) -> Unit) {
-        val credentialHosts = getHostList()
-        credentialHosts.forEach { host ->
-            listOf("https", "http").forEach { protocol ->
-                action.invoke(protocol, host)
-            }
+            unsetHttpInsteadOfGit(host = host)
         }
     }
 }

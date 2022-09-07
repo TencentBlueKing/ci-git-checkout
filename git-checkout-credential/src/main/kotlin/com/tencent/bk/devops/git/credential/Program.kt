@@ -28,7 +28,9 @@
 package com.tencent.bk.devops.git.credential
 
 import com.microsoft.alm.secret.Credential
+import com.tencent.bk.devops.git.credential.Constants.BK_CI_BUILD_TASK_ID
 import com.tencent.bk.devops.git.credential.Constants.GIT_CREDENTIAL_COMPATIBLEHOST
+import com.tencent.bk.devops.git.credential.Constants.GIT_CREDENTIAL_TASKID
 import com.tencent.bk.devops.git.credential.helper.GitHelper
 import com.tencent.bk.devops.git.credential.storage.CredentialStore
 import java.io.BufferedReader
@@ -44,6 +46,14 @@ class Program(
 ) {
 
     private val credentialStore = CredentialStore()
+
+    companion object {
+        private val devopsUri = URI("https://mock.devops.com")
+    }
+
+    private fun getMockTaskUri(taskId: String): URI {
+        return URI("https://$taskId.mock.devops.com")
+    }
 
     fun innerMain(args: Array<String>) {
         if (args.isEmpty() || args[0].contains("?")) {
@@ -67,12 +77,13 @@ class Program(
 
         with(credentialArguments) {
             credentialStore.add(
-                targetUri,
+                devopsUri,
                 Credential(username, password)
             )
-            compatible { compatibleUri ->
+            val taskId = System.getenv(BK_CI_BUILD_TASK_ID)
+            if (!taskId.isNullOrBlank()) {
                 credentialStore.add(
-                    compatibleUri,
+                    getMockTaskUri(taskId),
                     Credential(username, password)
                 )
             }
@@ -81,8 +92,7 @@ class Program(
 
     private fun CredentialArguments.compatible(action: (URI) -> Unit) {
         val compatibleHost = GitHelper.tryConfigGet(
-            configKey = GIT_CREDENTIAL_COMPATIBLEHOST,
-            configScope = ConfigScope.GLOBAL
+            configKey = GIT_CREDENTIAL_COMPATIBLEHOST
         )
         // 同一服务多个域名时，需要保存不同域名的凭证
         if (!compatibleHost.isNullOrBlank() && compatibleHost.contains(host)) {
@@ -96,9 +106,21 @@ class Program(
 
     private fun get() {
         with(readInput()) {
-            var credential = credentialStore.get(targetUri)
-            if (credential == null) {
-                credential = Credential.Empty
+            val trustHost = GitHelper.tryConfigGet(
+                configKey = GIT_CREDENTIAL_COMPATIBLEHOST
+            )?.split(",")?.contains(host) ?: false
+            val credential = if (trustHost) {
+                val taskId = GitHelper.tryConfigGet(
+                    configKey = GIT_CREDENTIAL_TASKID
+                )
+                var value = Credential.Empty
+                // 如果是插件获取凭证,则先去插件的凭证，如果插件凭证没有,再取全局凭证
+                if (!taskId.isNullOrBlank()) {
+                    value = credentialStore.get(getMockTaskUri(taskId))
+                }
+                value ?: credentialStore.get(devopsUri) ?: Credential.Empty
+            } else {
+                Credential.Empty
             }
             standardOut.print(setCredentials(credential!!))
         }
@@ -108,12 +130,10 @@ class Program(
      * 清理所有适配的host
      */
     private fun devopsErase() {
-        val credentialArguments = readInput()
-        with(credentialArguments) {
-            credentialStore.delete(targetUri)
-            compatible { compatibleUri ->
-                credentialStore.delete(compatibleUri)
-            }
+        credentialStore.delete(devopsUri)
+        val taskId = System.getenv(BK_CI_BUILD_TASK_ID)
+        if (!taskId.isNullOrBlank()) {
+            credentialStore.delete(getMockTaskUri(taskId))
         }
     }
 

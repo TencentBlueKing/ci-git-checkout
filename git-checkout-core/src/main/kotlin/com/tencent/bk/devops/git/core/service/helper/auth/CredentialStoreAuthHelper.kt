@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bk.devops.git.core.service.helper
+package com.tencent.bk.devops.git.core.service.helper.auth
 
 import com.tencent.bk.devops.git.core.constant.ContextConstants
 import com.tencent.bk.devops.git.core.constant.GitConstants
@@ -46,7 +46,7 @@ import java.nio.file.Paths
 class CredentialStoreAuthHelper(
     private val git: GitCommandManager,
     private val settings: GitSourceSettings
-) : HttpGitAuthHelper(git = git, settings = settings) {
+) : CredentialAuthHelper(git = git, settings = settings) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(CredentialStoreAuthHelper::class.java)
@@ -114,35 +114,8 @@ class CredentialStoreAuthHelper(
         )
     }
 
-    override fun configureSubmoduleAuth() {
-        super.configureSubmoduleAuth()
-        val commands = mutableListOf<String>()
-        if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            combinableHost { protocol, host ->
-                // 先卸载上一次执行可能没有清理的凭证
-                commands.add("git config --unset credential.$protocol://$host/.helper")
-                commands.add("git config credential.$protocol://$host/.helper '' ")
-            }
-        }
-        commands.add("git config --unset credential.helper")
+    override fun addSubmoduleCommand(commands: MutableList<String>) {
         commands.add("git config credential.helper 'store --file=${storeFile.absolutePath}'")
-        git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
-    }
-
-    override fun removeSubmoduleAuth() {
-        super.removeSubmoduleAuth()
-        val commands = mutableListOf<String>()
-        if (git.isAtLeastVersion(GitConstants.SUPPORT_EMPTY_CRED_HELPER_GIT_VERSION)) {
-            combinableHost { protocol, host ->
-                commands.add("git config --unset credential.$protocol://$host/.helper '' ")
-            }
-            combinableHost { protocol, host ->
-                commands.add("git config --remove-section credential.$protocol://$host/.helper '' ")
-            }
-        }
-        commands.add("git config --unset credential.helper")
-        commands.add("git config --remove-section credential.helper")
-        git.submoduleForeach("${commands.joinToString(";")} || true", settings.nestedSubmodules)
     }
 
     private fun writeStoreFile() {
