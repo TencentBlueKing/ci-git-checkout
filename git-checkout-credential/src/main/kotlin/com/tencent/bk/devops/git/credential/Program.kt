@@ -28,7 +28,6 @@
 package com.tencent.bk.devops.git.credential
 
 import com.microsoft.alm.secret.Credential
-import com.tencent.bk.devops.git.credential.Constants.BK_CI_BUILD_TASK_ID
 import com.tencent.bk.devops.git.credential.Constants.GIT_CREDENTIAL_COMPATIBLEHOST
 import com.tencent.bk.devops.git.credential.helper.GitHelper
 import com.tencent.bk.devops.git.credential.storage.CredentialStore
@@ -117,9 +116,8 @@ class Program(
      */
     private fun devopsErase() {
         credentialStore.delete(devopsUri)
-        val taskId = System.getenv(BK_CI_BUILD_TASK_ID)
         if (!taskId.isNullOrBlank()) {
-            credentialStore.delete(getMockTaskUri(taskId))
+            credentialStore.delete(getMockTaskUri(taskId!!))
         }
     }
 
