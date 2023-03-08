@@ -36,6 +36,7 @@ import com.tencent.bk.devops.git.core.pojo.input.GitCodeAtomParamInput
 import com.tencent.bk.devops.git.core.pojo.input.GitCodeCommandAtomParamInput
 import com.tencent.bk.devops.git.core.service.helper.IInputAdapter
 import com.tencent.bk.devops.git.core.util.EnvHelper
+import com.tencent.bk.devops.git.core.util.GitUtil
 
 class CheckoutAtomParamInputAdapter(
     private val input: CheckoutAtomParamInput
@@ -117,16 +118,8 @@ class CheckoutAtomParamInputAdapter(
             pipelineBuildId = pipelineBuildId,
             pipelineStartUserName = pipelineStartUserName,
             postEntryParam = postEntryParam,
-
             repositoryUrl = repositoryUrl,
-            scmType = if (
-                repositoryUrl.contains("https://github.com") ||
-                repositoryUrl.contains("git@github.com")
-            ) {
-                ScmType.GITHUB
-            } else {
-                ScmType.CODE_GIT
-            },
+            scmType = GitUtil.getScmTypeByUrl(repositoryUrl),
             authType = authType,
             ticketId = ticketId,
             accessToken = accessToken,

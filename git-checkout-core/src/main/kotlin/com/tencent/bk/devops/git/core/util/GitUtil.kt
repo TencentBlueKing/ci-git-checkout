@@ -29,6 +29,7 @@ package com.tencent.bk.devops.git.core.util
 
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.enums.CodeEventType
+import com.tencent.bk.devops.git.core.enums.ScmType
 import com.tencent.bk.devops.git.core.exception.ParamInvalidException
 import com.tencent.bk.devops.git.core.pojo.ServerInfo
 import java.net.URLDecoder
@@ -152,5 +153,20 @@ object GitUtil {
             gitHookEventType == CodeEventType.MERGE_REQUEST.name ||
             gitHookEventType == CodeEventType.MERGE_REQUEST_ACCEPT.name ||
             gitHookEventType == CodeEventType.PULL_REQUEST.name
+    }
+
+    fun getScmTypeByUrl(repositoryUrl: String): ScmType {
+        return when {
+            repositoryUrl.contains("git.code.oa.com") || repositoryUrl.contains("git.woa.com") -> {
+                ScmType.CODE_GIT
+            }
+            repositoryUrl.contains("github.com") -> {
+                ScmType.GITHUB
+            }
+            repositoryUrl.contains("git.tencent.com") || repositoryUrl.contains("git.code.tencent.com") -> {
+                ScmType.CODE_TGIT
+            }
+            else -> ScmType.CODE_GITLAB
+        }
     }
 }
