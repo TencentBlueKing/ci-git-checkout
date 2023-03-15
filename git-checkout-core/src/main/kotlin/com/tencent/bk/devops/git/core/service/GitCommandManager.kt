@@ -478,7 +478,8 @@ class GitCommandManager(
         return listOf(
             GitErrors.RemoteServerFailed.errorCode,
             GitErrors.AuthenticationFailed.errorCode,
-            GitErrors.RepositoryNotFoundFailed.errorCode
+            GitErrors.RepositoryNotFoundFailed.errorCode,
+            GitErrors.LockFileAlreadyExists.errorCode
         ).contains(errorCode)
     }
 
