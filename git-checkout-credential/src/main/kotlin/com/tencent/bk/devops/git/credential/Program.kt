@@ -136,10 +136,12 @@ class Program(
             var credential: Credential? = null
             if (!taskId.isNullOrBlank()) {
                 credential = try {
-                    credentialStore.get(getTaskUri(targetUri))
-                } catch (e: Exception) {
-                    Trace.writeLine("fail to get credential,try get old credential")
                     credentialStore.get(getOldTaskUri(targetUri))
+                } catch (ignored: Exception) {
+                    null
+                }
+                if (credential == null || credential == Credential.Empty) {
+                    credential = credentialStore.get(getTaskUri(targetUri))
                 }
             }
             if (credential == null || credential == Credential.Empty) {
