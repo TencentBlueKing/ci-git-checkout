@@ -58,6 +58,7 @@ class GitClientApi {
         .sslSocketFactory(sslSocketFactory(), trustAllCerts[0] as X509TrustManager)
         .hostnameVerifier { _, _ -> true }
         .followRedirects(false)
+        .retryOnConnectionFailure(true)
         .build()
 
     fun checkCredentials(
