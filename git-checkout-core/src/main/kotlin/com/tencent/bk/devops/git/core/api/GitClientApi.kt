@@ -34,6 +34,7 @@ import com.tencent.bk.devops.git.core.util.HttpUtil.sslSocketFactory
 import com.tencent.bk.devops.git.core.util.HttpUtil.trustAllCerts
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Response
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
@@ -58,7 +59,7 @@ class GitClientApi {
         .sslSocketFactory(sslSocketFactory(), trustAllCerts[0] as X509TrustManager)
         .hostnameVerifier { _, _ -> true }
         .followRedirects(false)
-        .retryOnConnectionFailure(true)
+        .protocols(listOf(Protocol.HTTP_1_1))
         .build()
 
     fun checkCredentials(
