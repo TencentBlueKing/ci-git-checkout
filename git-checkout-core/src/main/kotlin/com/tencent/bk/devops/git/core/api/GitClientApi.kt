@@ -97,7 +97,7 @@ class GitClientApi {
             }
             status == HttpStatus.OK.statusCode
         } catch (ignore: Exception) {
-            logger.warn("Failed to check credential ${ignore.message}")
+            logger.debug("Failed to check credential", ignore)
             false
         }
     }
