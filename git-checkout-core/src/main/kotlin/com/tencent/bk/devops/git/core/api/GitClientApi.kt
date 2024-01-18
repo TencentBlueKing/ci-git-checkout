@@ -34,7 +34,6 @@ import com.tencent.bk.devops.git.core.util.HttpUtil.sslSocketFactory
 import com.tencent.bk.devops.git.core.util.HttpUtil.trustAllCerts
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Response
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
