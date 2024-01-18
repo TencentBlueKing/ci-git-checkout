@@ -59,7 +59,6 @@ class GitClientApi {
         .sslSocketFactory(sslSocketFactory(), trustAllCerts[0] as X509TrustManager)
         .hostnameVerifier { _, _ -> true }
         .followRedirects(false)
-        .protocols(listOf(Protocol.HTTP_1_1))
         .build()
 
     fun checkCredentials(
@@ -99,7 +98,7 @@ class GitClientApi {
             }
             status == HttpStatus.OK.statusCode
         } catch (ignore: Exception) {
-            logger.debug("Failed to check credential", ignore)
+            logger.warn("Failed to check credential", ignore)
             false
         }
     }
