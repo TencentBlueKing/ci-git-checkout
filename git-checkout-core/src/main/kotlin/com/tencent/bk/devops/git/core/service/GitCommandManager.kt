@@ -50,6 +50,7 @@ import com.tencent.bk.devops.git.core.exception.GitExecuteException
 import com.tencent.bk.devops.git.core.pojo.CommitLogInfo
 import com.tencent.bk.devops.git.core.pojo.CredentialArguments
 import com.tencent.bk.devops.git.core.pojo.GitOutput
+import com.tencent.bk.devops.git.core.pojo.GitSubmoduleStatus
 import com.tencent.bk.devops.git.core.service.helper.VersionHelper
 import com.tencent.bk.devops.git.core.util.AgentEnv
 import com.tencent.bk.devops.git.core.util.CommandUtil
@@ -764,5 +765,19 @@ class GitCommandManager(
      */
     fun lfsVersion() {
         execGit(args = listOf("lfs", "version"))
+    }
+
+    /**
+     * 查询submodule状态
+     */
+    fun submoduleStatus(
+        recursive: Boolean? = false
+    ): List<GitSubmoduleStatus> {
+        val args = mutableListOf("submodule", "status")
+        if (recursive == true) {
+            args.add("--recursive")
+        }
+        val submoduleStatusStr = execGit(args = args, allowAllExitCodes = true).stdOut
+        return GitUtil.parseSubmoduleStatus(submoduleStatusStr)
     }
 }

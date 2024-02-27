@@ -33,6 +33,7 @@ import com.tencent.bk.devops.git.core.pojo.GitSourceSettings
 import com.tencent.bk.devops.git.core.service.GitCommandManager
 import com.tencent.bk.devops.git.core.service.helper.auth.GitAuthHelperFactory
 import com.tencent.bk.devops.git.core.util.EnvHelper
+import com.tencent.bk.devops.git.core.util.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -54,6 +55,7 @@ open class GitSubmodulesHandler(
                     return
                 }
                 logger.groupStart("Fetching submodules")
+                checkSubmoduleStatus()
                 checkSubmoduleParam()
                 git.submoduleSync(recursive = nestedSubmodules, path = submodulesPath)
                 if (pullStrategy == PullStrategy.REVERT_UPDATE) {
@@ -112,6 +114,19 @@ open class GitSubmodulesHandler(
             settings.submoduleDepth > 0) {
             logger.warn("git submodule enabling both --remote and depth parameters at " +
                             "the same time may cause issues with fetching.")
+        }
+    }
+
+    private fun checkSubmoduleStatus() {
+        val submoduleStatus = git.submoduleStatus(settings.nestedSubmodules)
+        // 处理子模块状态，当ref为空时就删除对应的submodule目录
+        submoduleStatus.filter { it.ref.isNullOrBlank() }.forEach {
+            logger.debug("start clear submodule|[${it.path}]|[${it.commitId}]")
+            val submoduleDir = File(
+                settings.bkWorkspace + File.separator +
+                        settings.repositoryPath + File.separator + it.path
+            )
+            FileUtils.deleteDirectory(submoduleDir)
         }
     }
 }
