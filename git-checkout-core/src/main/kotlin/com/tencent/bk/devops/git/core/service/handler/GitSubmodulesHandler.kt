@@ -120,13 +120,18 @@ open class GitSubmodulesHandler(
     private fun checkSubmoduleStatus() {
         val submoduleStatus = git.submoduleStatus(settings.nestedSubmodules)
         // 处理子模块状态，当ref为空时就删除对应的submodule目录
-        submoduleStatus.filter { it.ref.isNullOrBlank() }.forEach {
-            logger.debug("start clear submodule|[${it.path}]|[${it.commitId}]")
-            val submoduleDir = File(
+        submoduleStatus.filter { it.ref.isNullOrBlank() }.forEach { status ->
+            logger.debug("handle submodule, ref is empty, path: ${status.path}")
+            File(
                 settings.bkWorkspace + File.separator +
-                        settings.repositoryPath + File.separator + it.path
-            )
-            FileUtils.deleteDirectory(submoduleDir)
+                        settings.repositoryPath + File.separator + status.path
+            ).let {
+                logger.debug("target submodule path[$it.absolutePath]")
+                if (it.exists()){
+                    logger.debug("start clear submodule|[${it.absolutePath}]|[${status.commitId}]")
+                    FileUtils.deleteDirectory(it)
+                }
+            }
         }
     }
 }
