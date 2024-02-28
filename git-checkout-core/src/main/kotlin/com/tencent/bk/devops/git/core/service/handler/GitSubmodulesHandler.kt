@@ -123,8 +123,7 @@ open class GitSubmodulesHandler(
         submoduleStatus.filter { it.ref.isNullOrBlank() }.forEach { status ->
             logger.debug("handle submodule, ref is empty, path: ${status.path}")
             File(
-                settings.bkWorkspace + File.separator +
-                        settings.repositoryPath + File.separator + status.path
+                settings.repositoryPath + File.separator + status.path
             ).let {
                 logger.debug("target submodule path[$it.absolutePath]")
                 if (it.exists()){
