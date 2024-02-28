@@ -27,6 +27,7 @@
 
 package com.tencent.bk.devops.git.core.util
 
+import com.tencent.bk.devops.git.core.pojo.GitSubmoduleStatus
 import com.tencent.bk.devops.git.core.pojo.ServerInfo
 import org.junit.Assert
 import org.junit.Test
@@ -170,5 +171,85 @@ class GitUtilTest {
                 hostNameList = listOf("git.exaple.com", "git.exaple2.com")
             )
         )
+    }
+
+    @Test
+    fun parseSubmoduleStatus(){
+        var submoduleStatusStr = listOf("-e742bf800a18bdb61037357a1074e63057679913 bk_ci_process_test_java")
+        var expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        var actual = GitSubmoduleStatus(
+            commitId = "e742bf800a18bdb61037357a1074e63057679913",
+            path="bk_ci_process_test_java",
+            ref = ""
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 45f22503588f74fea7e54f2462e8f95d827fcaaf ../bk_ci_process_test_java_3/HelloeWorlds_HJ" +
+                " (v1.100.1.0-55-g45f2250)")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "45f22503588f74fea7e54f2462e8f95d827fcaaf",
+            path="../bk_ci_process_test_java_3/HelloeWorlds_HJ",
+            ref = "v1.100.1.0-55-g45f2250"
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 git-checkout ")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="git-checkout",
+            ref = ""
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 git-checkout ()")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="git-checkout",
+            ref = ""
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="bk_ci_process_test_java space dir/git-checkout",
+            ref = "1.1.27-2024-01-12"
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="bk_ci_process_test_java space dir/git-checkout",
+            ref = "1.1.27-2024-01-12"
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="bk_ci_process_test_java 代码 dir/git-checkout",
+            ref = "1.1.27-2024-01-12"
+        )
+        Assert.assertEquals(expected,actual)
+
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码 " +
+                "dir/git-checkout ()")
+        expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
+        actual = GitSubmoduleStatus(
+            commitId = "32651f57c27039e143a128f2b05403436f86ce74",
+            path="bk_ci_process_test_java 代码 dir/git-checkout",
+            ref = ""
+        )
+        Assert.assertEquals(expected,actual)
     }
 }
