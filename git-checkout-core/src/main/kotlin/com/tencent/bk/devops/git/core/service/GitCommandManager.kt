@@ -777,7 +777,7 @@ class GitCommandManager(
         if (recursive == true) {
             args.add("--recursive")
         }
-        val submoduleStatusStr = execGit(args = args, allowAllExitCodes = true).stdOut
+        val submoduleStatusStr = execGit(args = args, allowAllExitCodes = true).stdOuts
         return GitUtil.parseSubmoduleStatus(submoduleStatusStr)
     }
 }

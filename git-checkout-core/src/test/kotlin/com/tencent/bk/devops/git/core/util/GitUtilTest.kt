@@ -175,7 +175,7 @@ class GitUtilTest {
 
     @Test
     fun parseSubmoduleStatus(){
-        var submoduleStatusStr = "-e742bf800a18bdb61037357a1074e63057679913 bk_ci_process_test_java"
+        var submoduleStatusStr = listOf("-e742bf800a18bdb61037357a1074e63057679913 bk_ci_process_test_java")
         var expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         var actual = GitSubmoduleStatus(
             commitId = "e742bf800a18bdb61037357a1074e63057679913",
@@ -184,8 +184,8 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 45f22503588f74fea7e54f2462e8f95d827fcaaf ../bk_ci_process_test_java_3/HelloeWorlds_HJ" +
-                " (v1.100.1.0-55-g45f2250)"
+        submoduleStatusStr = listOf(" 45f22503588f74fea7e54f2462e8f95d827fcaaf ../bk_ci_process_test_java_3/HelloeWorlds_HJ" +
+                " (v1.100.1.0-55-g45f2250)")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "45f22503588f74fea7e54f2462e8f95d827fcaaf",
@@ -194,7 +194,7 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 git-checkout "
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 git-checkout ")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",
@@ -203,7 +203,7 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 git-checkout ()"
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 git-checkout ()")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",
@@ -212,8 +212,8 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
-                " dir/git-checkout (1.1.27-2024-01-12)"
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",
@@ -222,8 +222,8 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
-                " dir/git-checkout (1.1.27-2024-01-12)"
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java space" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",
@@ -232,8 +232,8 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码" +
-                " dir/git-checkout (1.1.27-2024-01-12)"
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码" +
+                " dir/git-checkout (1.1.27-2024-01-12)")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",
@@ -242,7 +242,8 @@ class GitUtilTest {
         )
         Assert.assertEquals(expected,actual)
 
-        submoduleStatusStr = " 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码 dir/git-checkout ()"
+        submoduleStatusStr = listOf(" 32651f57c27039e143a128f2b05403436f86ce74 bk_ci_process_test_java 代码 " +
+                "dir/git-checkout ()")
         expected = GitUtil.parseSubmoduleStatus(submoduleStatusStr)[0]
         actual = GitSubmoduleStatus(
             commitId = "32651f57c27039e143a128f2b05403436f86ce74",

@@ -208,10 +208,10 @@ object GitUtil {
         }
     }
 
-    fun parseSubmoduleStatus(submoduleStatusStr: String): List<GitSubmoduleStatus> {
+    fun parseSubmoduleStatus(submoduleStatus: List<String>): List<GitSubmoduleStatus> {
         val submoduleStatusList = mutableListOf<GitSubmoduleStatus>()
         // 按行解析submodule状态
-        submoduleStatusStr.lines().forEach {
+        submoduleStatus.forEach {
             logger.debug("submodule status one line: [$it]")
             val matchResult = GIT_SUBMODULE_STATUS_REGEX.find(it) ?: return@forEach
             val commitId = matchResult.groupValues[1]
