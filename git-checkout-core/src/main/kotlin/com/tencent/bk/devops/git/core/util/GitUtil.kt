@@ -212,6 +212,7 @@ object GitUtil {
         val submoduleStatusList = mutableListOf<GitSubmoduleStatus>()
         // 按行解析submodule状态
         submoduleStatusStr.lines().forEach {
+            logger.debug("submodule status one line: [$it]")
             val matchResult = GIT_SUBMODULE_STATUS_REGEX.find(it) ?: return@forEach
             val commitId = matchResult.groupValues[1]
             val path = matchResult.groupValues[2]
