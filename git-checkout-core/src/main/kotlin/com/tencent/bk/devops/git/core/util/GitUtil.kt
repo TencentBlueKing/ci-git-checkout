@@ -31,6 +31,7 @@ import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.enums.CodeEventType
 import com.tencent.bk.devops.git.core.enums.ScmType
 import com.tencent.bk.devops.git.core.exception.ParamInvalidException
+import com.tencent.bk.devops.git.core.pojo.GitSubmoduleStatus
 import com.tencent.bk.devops.git.core.pojo.ServerInfo
 import com.tencent.bk.devops.git.core.service.helper.DefaultGitTypeParseHelper
 import com.tencent.bk.devops.git.core.service.helper.IGitTypeParseHelper
@@ -48,6 +49,7 @@ object GitUtil {
     private val GIT_IP_SSH_URL_REGEX = Regex("ssh://git@(([0-9]{1,3}\\.){3}[0-9]{1,3})/(.*?)(\\.git)?$")
     private val GIT_IP_PORT_SSH_URL_REGEX = Regex("ssh://git@(([0-9]{1,3}\\.){3}[0-9]{1,3}):([0-9]{1,9})/(.*?)(\\.git)?$")
     private val NOT_GIT_PROTOCOL_URL_REGEX = Regex("([-.a-z0-9A-Z]+):(.*?)(\\.git)?$")
+    private val GIT_SUBMODULE_STATUS_REGEX = Regex("[-+]?\\s?(\\w+)\\s+(.+?)\\s?(\\((.*)\\))?\$")
     private val logger = LoggerFactory.getLogger(GitUtil::class.java)
 
     fun urlDecode(s: String) = URLDecoder.decode(s, "UTF-8")
@@ -202,5 +204,19 @@ object GitUtil {
         } catch (e: ParamInvalidException) {
             false
         }
+    }
+
+    fun parseSubmoduleStatus(submoduleStatus: List<String>): List<GitSubmoduleStatus> {
+        val submoduleStatusList = mutableListOf<GitSubmoduleStatus>()
+        // 按行解析submodule状态
+        submoduleStatus.forEach {
+            logger.debug("submodule status one line: [$it]")
+            val matchResult = GIT_SUBMODULE_STATUS_REGEX.find(it) ?: return@forEach
+            val commitId = matchResult.groupValues[1]
+            val path = matchResult.groupValues[2]
+            val ref = matchResult.groupValues[4]
+            submoduleStatusList.add(GitSubmoduleStatus(commitId, path, ref))
+        }
+        return submoduleStatusList
     }
 }
