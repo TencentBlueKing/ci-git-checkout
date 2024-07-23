@@ -35,6 +35,7 @@ import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_REPOSITO
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.enums.HttpStatus
 import com.tencent.bk.devops.git.core.exception.ApiException
+import com.tencent.bk.devops.git.core.exception.CredentialNotExistException
 import com.tencent.bk.devops.git.core.exception.PermissionForbiddenException
 import com.tencent.bk.devops.git.core.i18n.GitErrorsText
 import com.tencent.bk.devops.git.core.pojo.api.CommitData
@@ -94,11 +95,41 @@ class DevopsApi : IDevopsApi, BaseApi() {
     override fun getCredential(credentialId: String, publicKey: String): Result<CredentialInfo> {
         val path = "/ticket/api/build/credentials/$credentialId?publicKey=${encode(publicKey)}"
         val request = buildGet(path)
-        val responseContent = HttpUtil.retryRequest(
-            request = request,
-            errorMessage = "Failed to get credentials"
-        )
-        return JsonUtil.to(responseContent, object : TypeReference<Result<CredentialInfo>>() {})
+        try {
+            val responseContent = HttpUtil.retryRequest(
+                request = request,
+                errorMessage = "Failed to get credentials"
+            )
+            val result = JsonUtil.to(responseContent, object : TypeReference<Result<CredentialInfo>>() {})
+            if (result.data == null) {
+                throw ApiException(
+                    errorType = ErrorType.USER,
+                    errorCode = GitConstants.CONFIG_ERROR,
+                    errorMsg = "Credential does not exist"
+                )
+            }
+            return result
+        }catch (ignored: CredentialNotExistException){
+            throw CredentialNotExistException(
+                errorType = ignored.errorType,
+                errorCode = ignored.errorCode,
+                errorMsg = GitErrorsText.get().notExistCredential?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: ignored.errorMsg,
+                reason = GitErrorsText.get().notExistCredentialCause?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: "",
+                solution = GitErrorsText.get().notExistCredentialSolution?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId)
+                    )
+                } ?: "",
+                wiki = GitErrorsText.get().notExistCredentialWiki?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId)
+                    )
+                } ?: "",
+            )
+
+        }
     }
 
     override fun getOauthToken(userId: String): Result<GitToken> {
