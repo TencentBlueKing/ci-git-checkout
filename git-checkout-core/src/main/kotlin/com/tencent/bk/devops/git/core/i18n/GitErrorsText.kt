@@ -122,12 +122,10 @@ class GitErrorsText : TranslationBundle() {
     var libcurlNotSupportHttpsCause: String? = null
     var libcurlNotSupportHttpsSolution: String? = null
     var libcurlNotSupportHttpsWiki: String? = null
-
     var gitNotInstall: String? = null
     var gitNotInstallCause: String? = null
     var gitNotInstallSolution: String? = null
     var gitNotInstallWiki: String? = null
-
     var notFoundGitRemoteHttps: String? = null
     var notFoundGitRemoteHttpsCause: String? = null
     var notFoundGitRemoteHttpsSolution: String? = null
@@ -140,13 +138,10 @@ class GitErrorsText : TranslationBundle() {
     var notPermissionGetOauthTokenCause: String? = null
     var notPermissionGetOauthTokenSolution: String? = null
     var notPermissionGetOauthTokenWiki: String? = null
-
-
     var notExistCredential: String? = null
     var notExistCredentialCause: String? = null
     var notExistCredentialSolution: String? = null
     var notExistCredentialWiki: String? = null
-
     var notExistRepository:String?=null
     var notExistRepositoryCause: String? = null
     var notExistRepositorySolution: String? = null
