@@ -30,6 +30,7 @@ package com.tencent.bk.devops.git.core.exception
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.plugin.pojo.ErrorType
 
+@SuppressWarnings("LongParameterList")
 class ApiException constructor(
     val httpStatus: Int? = null,
     override val errorType: ErrorType = ErrorType.THIRD_PARTY,

@@ -35,7 +35,6 @@ import com.tencent.bk.devops.git.core.constant.ContextConstants.CONTEXT_REPOSITO
 import com.tencent.bk.devops.git.core.constant.GitConstants
 import com.tencent.bk.devops.git.core.enums.HttpStatus
 import com.tencent.bk.devops.git.core.exception.ApiException
-import com.tencent.bk.devops.git.core.exception.CredentialNotExistException
 import com.tencent.bk.devops.git.core.exception.PermissionForbiddenException
 import com.tencent.bk.devops.git.core.i18n.GitErrorsText
 import com.tencent.bk.devops.git.core.pojo.api.CommitData
