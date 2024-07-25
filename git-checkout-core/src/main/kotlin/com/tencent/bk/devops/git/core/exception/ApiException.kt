@@ -34,5 +34,8 @@ class ApiException constructor(
     val httpStatus: Int? = null,
     override val errorType: ErrorType = ErrorType.THIRD_PARTY,
     override val errorCode: Int = GitConstants.DEPEND_ERROR,
-    override val errorMsg: String
+    override val errorMsg: String,
+    override val reason: String = "",
+    override val solution: String = "",
+    override val wiki: String = ""
 ) : TaskExecuteException(errorType, errorCode, errorMsg)

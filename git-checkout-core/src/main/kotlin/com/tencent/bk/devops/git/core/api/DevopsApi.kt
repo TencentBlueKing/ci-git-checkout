@@ -109,26 +109,31 @@ class DevopsApi : IDevopsApi, BaseApi() {
                 )
             }
             return result
-        }catch (ignored: CredentialNotExistException){
-            throw CredentialNotExistException(
-                errorType = ignored.errorType,
-                errorCode = ignored.errorCode,
-                errorMsg = GitErrorsText.get().notExistCredential?.let {
-                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
-                } ?: ignored.errorMsg,
-                reason = GitErrorsText.get().notExistCredentialCause?.let {
-                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
-                } ?: "",
-                solution = GitErrorsText.get().notExistCredentialSolution?.let {
-                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId)
-                    )
-                } ?: "",
-                wiki = GitErrorsText.get().notExistCredentialWiki?.let {
-                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId)
-                    )
-                } ?: "",
-            )
-
+        } catch (ignored: ApiException) {
+            if (ignored.httpStatus == HttpStatus.NOT_FOUND.statusCode) {
+                throw ApiException(
+                    errorType = ignored.errorType,
+                    errorCode = ignored.errorCode,
+                    errorMsg = GitErrorsText.get().notExistCredential?.let {
+                        defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                    } ?: ignored.errorMsg,
+                    reason = GitErrorsText.get().notExistCredentialCause?.let {
+                        defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                    } ?: "",
+                    solution = GitErrorsText.get().notExistCredentialSolution?.let {
+                        defaultResolver.resolveByMap(
+                            it, mapOf("credentialId" to credentialId)
+                        )
+                    } ?: "",
+                    wiki = GitErrorsText.get().notExistCredentialWiki?.let {
+                        defaultResolver.resolveByMap(
+                            it, mapOf("credentialId" to credentialId)
+                        )
+                    } ?: "",
+                )
+            } else {
+                throw ignored
+            }
         }
     }
 
