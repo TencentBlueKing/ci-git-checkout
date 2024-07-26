@@ -102,6 +102,7 @@ class DevopsApi : IDevopsApi, BaseApi() {
             val result = JsonUtil.to(responseContent, object : TypeReference<Result<CredentialInfo>>() {})
             if (result.data == null) {
                 throw ApiException(
+                    httpStatus = HttpStatus.NOT_FOUND.statusCode,
                     errorType = ErrorType.USER,
                     errorCode = GitConstants.CONFIG_ERROR,
                     errorMsg = "Credential does not exist"
