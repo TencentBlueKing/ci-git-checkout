@@ -111,25 +111,26 @@ class DevopsApi : IDevopsApi, BaseApi() {
             return result
         } catch (ignored: ApiException) {
             if (ignored.httpStatus == HttpStatus.NOT_FOUND.statusCode) {
+                val errorMsg = GitErrorsText.get().notExistCredential?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: "Credential does not exist"
+                val reason = GitErrorsText.get().notExistCredentialCause?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: ""
+                val solution = GitErrorsText.get().notExistCredentialSolution?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: ""
+                val wiki = GitErrorsText.get().notExistCredentialWiki?.let {
+                    defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
+                } ?: ""
                 throw ApiException(
                     errorType = ignored.errorType,
                     errorCode = ignored.errorCode,
-                    errorMsg = GitErrorsText.get().notExistCredential?.let {
-                        defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
-                    } ?: ignored.errorMsg,
-                    reason = GitErrorsText.get().notExistCredentialCause?.let {
-                        defaultResolver.resolveByMap(it, mapOf("credentialId" to credentialId))
-                    } ?: "",
-                    solution = GitErrorsText.get().notExistCredentialSolution?.let {
-                        defaultResolver.resolveByMap(
-                            it, mapOf("credentialId" to credentialId)
-                        )
-                    } ?: "",
-                    wiki = GitErrorsText.get().notExistCredentialWiki?.let {
-                        defaultResolver.resolveByMap(
-                            it, mapOf("credentialId" to credentialId)
-                        )
-                    } ?: "",
+                    errorMsg = errorMsg,
+                    reason = reason,
+                    solution = solution,
+                    wiki = wiki,
+                    httpStatus = ignored.httpStatus
                 )
             } else {
                 throw ignored
