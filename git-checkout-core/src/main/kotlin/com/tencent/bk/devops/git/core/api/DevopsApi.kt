@@ -133,6 +133,16 @@ class DevopsApi : IDevopsApi, BaseApi() {
         }
         return result
     }
+    fun getOauthUrl(userId: String): Result<String> {
+        val path = "/repository/api/build/oauth/git/$userId/oauthUrl"
+        val request = buildGet(path)
+        val responseContent = HttpUtil.retryRequest(
+            request = request,
+            errorMessage = "Failed to get oauth token information"
+        )
+        val result = JsonUtil.to(responseContent, object : TypeReference<Result<String>>() {})
+        return result
+    }
 
     override fun getOauthToken(userId: String): Result<GitToken> {
         val path = "/repository/api/build/oauth/git/$userId"
@@ -144,10 +154,20 @@ class DevopsApi : IDevopsApi, BaseApi() {
             )
             val result = JsonUtil.to(responseContent, object : TypeReference<Result<GitToken>>() {})
             if (result.data == null) {
+                val oauthUrl =getOauthUrl(userId)
                 throw ApiException(
                     errorType = ErrorType.USER,
                     errorCode = GitConstants.CONFIG_ERROR,
-                    errorMsg = "User [$userId] has no oauth authorization"
+                    errorMsg = "User [$userId] has no oauth authorization",
+                    wiki = GitErrorsText.get().getOauthUrlWiki?.let {
+                        defaultResolver.resolveByMap(
+                            it,
+                            mapOf(
+                                "userId" to userId,
+                                "oauthUrl" to oauthUrl
+                            )
+                        )
+                    } ?: "",
                 )
             }
             return result
