@@ -91,10 +91,15 @@ class Program(
             // 保存插件的凭证,为了解决当出现`拉代码1->拉代码2-bash:git push 代码1`,
             // 如果拉仓库2的身份没有仓库1的权限，那么bash就会报错,因为凭证会被拉代码2插件给覆盖
             if (!taskId.isNullOrBlank()) {
-                credentialStore.add(
-                    getTaskUri(targetUri),
-                    Credential(username, password)
-                )
+                // 同时保存http/https两种凭证
+                compatibleHttpTaskUri(
+                    uri = getTaskUri(targetUri)
+                ) {
+                    credentialStore.add(
+                        it,
+                        Credential(username, password)
+                    )
+                }
             }
             // 保存fork库凭证
             if (!forkUsername.isNullOrBlank() && !forkPassword.isNullOrBlank()) {
@@ -155,7 +160,9 @@ class Program(
             }
             if (!taskId.isNullOrBlank()) {
                 // 卸载主库凭证
-                credentialStore.delete(getTaskUri(targetUri))
+                compatibleHttpTaskUri(getTaskUri(targetUri)) {
+                    credentialStore.delete(it)
+                }
                 // 存在fork库凭证，卸载fork库凭证
                 if (!forkProtocol.isNullOrBlank() && !forkHost.isNullOrBlank()) {
                     credentialStore.delete(getTaskUri(forkTargetUri, "$taskId-fork"))
@@ -215,5 +222,12 @@ class Program(
             forkUsername = forkUsername,
             forkPassword = forkPassword
         )
+    }
+
+    private fun compatibleHttpTaskUri(uri: URI, action: (URI) -> Unit) {
+        action.invoke(uri)
+        val otherScheme = if (uri.scheme == "https") "http" else "https"
+        val httpUri = URI(otherScheme, uri.userInfo, uri.host, uri.port, uri.path, uri.query, uri.fragment)
+        action.invoke(httpUri)
     }
 }
