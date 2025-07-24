@@ -70,6 +70,9 @@ class InitRepoHandler(
                 if (settings.enableTrace == true) {
                     git.setEnvironmentVariable(GitConstants.GIT_TRACE, "1")
                 }
+                if (settings.skipLfs == true) {
+                    git.setEnvironmentVariable(GitConstants.GIT_LFS_SKIP_SMUDGE, "1")
+                }
                 logger.groupEnd("")
             }
         } finally {
