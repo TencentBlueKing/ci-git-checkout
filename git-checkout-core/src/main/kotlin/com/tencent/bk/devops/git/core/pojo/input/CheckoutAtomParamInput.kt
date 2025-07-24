@@ -160,5 +160,9 @@ data class CheckoutAtomParamInput(
     /**
      * 工蜂cache灰度权重
      */
-    val tGitCacheGrayWeight: String?
+    val tGitCacheGrayWeight: String?,
+    /**
+     * 跳过LFS文件拉取
+     */
+    val skipGitLfs: Boolean? = false
 )
