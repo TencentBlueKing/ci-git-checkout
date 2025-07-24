@@ -274,7 +274,7 @@ class GitCodeAtomParamInputAdapter(
                 tGitCacheGrayProject = tGitCacheGrayProject,
                 tGitCacheGrayWeight = tGitCacheGrayWeight,
                 tGitCacheGrayWhiteProject = tGitCacheGrayWhiteProject,
-                skipLfs = skipLfs
+                skipGitLfs = skipGitLfs
             )
         }
     }

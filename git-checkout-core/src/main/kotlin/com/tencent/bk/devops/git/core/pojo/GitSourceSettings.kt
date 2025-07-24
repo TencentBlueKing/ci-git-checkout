@@ -245,7 +245,7 @@ data class GitSourceSettings(
     /**
      * 跳过LFS文件拉取
      */
-    val skipLfs: Boolean? = false
+    val skipGitLfs: Boolean? = false
 ) {
     val sourceRepoUrlEqualsRepoUrl: Boolean
         get() = GitUtil.isSameRepository(

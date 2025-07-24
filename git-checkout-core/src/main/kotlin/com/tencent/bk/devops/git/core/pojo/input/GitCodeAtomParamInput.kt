@@ -147,5 +147,5 @@ data class GitCodeAtomParamInput(
     /**
      * 跳过LFS文件拉取
      */
-    val skipLfs: Boolean? = false
+    val skipGitLfs: Boolean? = false
 )

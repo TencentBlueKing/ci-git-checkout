@@ -131,7 +131,7 @@ class CheckoutAtomParamInputAdapter(
             tGitCacheGrayWeight = tGitCacheGrayWeight,
             tGitCacheGrayProject = tGitCacheGrayProject,
             tGitCacheGrayWhiteProject = tGitCacheGrayWhiteProject,
-            skipLfs = skipLfs
+            skipGitLfs = skipGitLfs
         )
     ).getInputs()
 
@@ -201,7 +201,7 @@ class CheckoutAtomParamInputAdapter(
             tGitCacheGrayWeight = tGitCacheGrayWeight,
             tGitCacheGrayProject = tGitCacheGrayProject,
             tGitCacheGrayWhiteProject = tGitCacheGrayWhiteProject,
-            skipLfs = skipLfs
+            skipGitLfs = skipGitLfs
         )
     ).getInputs()
 

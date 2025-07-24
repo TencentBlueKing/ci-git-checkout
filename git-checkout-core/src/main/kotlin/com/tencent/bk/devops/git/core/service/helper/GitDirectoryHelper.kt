@@ -110,7 +110,7 @@ class GitDirectoryHelper(
             git.tryClean(settings.enableGitCleanIgnore, settings.enableGitCleanNested)
         }
         // 开启[skipLfs]则不需要移除内置变量
-        if (settings.skipLfs != true) {
+        if (settings.skipGitLfs != true) {
             git.removeEnvironmentVariable(GIT_LFS_SKIP_SMUDGE)
         }
     }
