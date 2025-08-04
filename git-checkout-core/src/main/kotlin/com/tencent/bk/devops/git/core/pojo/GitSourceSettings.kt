@@ -241,7 +241,11 @@ data class GitSourceSettings(
     /**
      * 工蜂cache灰度权重
      */
-    val tGitCacheGrayWeight: String? = null
+    val tGitCacheGrayWeight: String? = null,
+    /**
+     * 跳过LFS文件拉取
+     */
+    val skipGitLfs: Boolean? = false
 ) {
     val sourceRepoUrlEqualsRepoUrl: Boolean
         get() = GitUtil.isSameRepository(
