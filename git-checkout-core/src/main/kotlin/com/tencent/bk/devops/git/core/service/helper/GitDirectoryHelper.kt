@@ -109,7 +109,10 @@ class GitDirectoryHelper(
         if (settings.enableGitClean) {
             git.tryClean(settings.enableGitCleanIgnore, settings.enableGitCleanNested)
         }
-        git.removeEnvironmentVariable(GIT_LFS_SKIP_SMUDGE)
+        // 开启[skipLfs]则不需要移除内置变量
+        if (settings.skipGitLfs != true) {
+            git.removeEnvironmentVariable(GIT_LFS_SKIP_SMUDGE)
+        }
     }
 
     private fun removeLockFile(repositoryPath: String) {
